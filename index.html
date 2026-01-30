@@ -95,7 +95,10 @@
 </head>
 <body>
 
-    <audio id="bgMusic" loop src="https://s3.ustatik.com/audio.com.audio/source/40/54/1833865734165440-1833865734218455.mp3?response-content-disposition=attachment%3B%20filename%3D%22Fluffing-a-Duck%28chosic.com%29%202024-03-13%2002_25_35.mp3%22&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=W7IA3NSYSOQIKLY9DEVC%2F20260130%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260130T164443Z&X-Amz-SignedHeaders=host&X-Amz-Expires=518400&X-Amz-Signature=7281d9d64e2aaad11da25adb5bd79933a1e7a68862220f79a228fbd823c770b2"></audio>
+    <audio id="bgMusic" loop src="https://s3.ustatik.com/audio.com.audio/source/40/54/1833865734165440-1833865734218455.mp3?response-content-disposition=attachment%3B%20filename%3D%22Fluffing-a-Duck%28chosic.com%29%202024-03-13%2002_25_35.mp3%22&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=W7IA3NSYSOQIKLY9DEVC%2F20260130%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260130T164443Z&X-Amz-SignedHeaders=host&X-Amz-Expires=518400&X-Amz-Signature=7281d9d64e2aaad11da25adb5bd79933a1e7a68862220f79a228fbd823c770b2.mp3"></audio>
+    
+    <audio id="eatSound" src="https://tuna.voicemod.net/sound/355173fc-bea3-4f46-b9fc-939b0eb982e1?utm_source=tuna&utm_medium=referral&utm_campaign=share.mp3" preload="auto"></audio>
+
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
         <input type="text" id="playerName" placeholder="Name" maxlength="12">
@@ -206,6 +209,7 @@
         let audioCtx;
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
+        // Keeping the sfx function for crash sounds etc.
         function sfx(f1, f2) {
             if (!audioCtx || audioCtx.state === 'suspended') return;
             const o = audioCtx.createOscillator();
@@ -284,8 +288,11 @@
             currentPlayer = nameInput;
             initAudio();
 
-            // --- START BACKGROUND MUSIC ---
+            // --- UNLOCK SOUNDS ---
             const music = document.getElementById("bgMusic");
+            const eatSfx = document.getElementById("eatSound");
+            
+            eatSfx.load();
             music.volume = 0.1; 
             music.play().catch(e => console.log("Audio play failed: ", e));
 
@@ -337,7 +344,13 @@
                 if (head.x === foodX && head.y === foodY) {
                     totalScore += 10;
                     toxicity = Math.max(0, toxicity - 40);
-                    missCombo = 0; sfx(600, 900);
+                    missCombo = 0; 
+                    
+                    // --- CUSTOM EATING SOUND ---
+                    const eatSfx = document.getElementById("eatSound");
+                    eatSfx.currentTime = 0;
+                    eatSfx.play();
+                    
                     document.getElementById("scoreVal").innerText = totalScore;
                     fetchGlobalHigh(); 
                     createFood();
@@ -429,10 +442,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-

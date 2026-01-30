@@ -38,7 +38,6 @@
             justify-content: center;
         }
 
-        /* Toxicity meter hidden on start page */
         .toxic-wrapper {
             position: absolute;
             right: -30px; 
@@ -96,6 +95,8 @@
 </head>
 <body>
 
+    <audio id="bgMusic" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
         <input type="text" id="playerName" placeholder="Name" maxlength="12">
@@ -139,13 +140,11 @@
     </div>
 
     <script>
-        // --- DATABASE CONFIG ---
         const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/"; 
 
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- FULL ROAST LIBRARIES ---
         const startRoasts = [
             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
@@ -195,7 +194,6 @@
             "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
         ];
 
-        // --- GAME VARIABLES ---
         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
         let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
         let foodX, foodY, toxicity = 0, isRage = false;
@@ -204,7 +202,6 @@
         let globalBestScore = 0;
         let globalBestName = "NONE";
         
-        // DIRECTION BUFFER TO PREVENT SELF-COLLISION ON FAST INPUTS
         let nextDirection = { dx: 20, dy: 0 };
 
         let audioCtx;
@@ -287,8 +284,14 @@
             }
             currentPlayer = nameInput;
             initAudio();
+
+            // --- START BACKGROUND MUSIC ---
+            const music = document.getElementById("bgMusic");
+            music.volume = 0.3; 
+            music.play().catch(e => console.log("Audio play failed: ", e));
+
             document.getElementById("start-screen").style.display = "none";
-            document.getElementById("toxic-ui").style.display = "flex"; // SHOW TOXICITY NOW
+            document.getElementById("toxic-ui").style.display = "flex"; 
             gameRunning = true; 
             createFood(); 
             gameLoop();
@@ -305,7 +308,6 @@
             let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
             
             setTimeout(() => {
-                // APPLY THE BUFFERED DIRECTION ONLY ON TICK
                 dx = nextDirection.dx;
                 dy = nextDirection.dy;
 
@@ -365,6 +367,9 @@
         }
 
         async function handleGameOver() {
+            // STOP MUSIC ON GAME OVER
+            document.getElementById("bgMusic").pause();
+            
             gameRunning = false;
             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
             if (totalScore > localHigh) {
@@ -391,9 +396,14 @@
         }
 
         function togglePause() { 
-            if(!gameRunning) return; // Prevent pausing on start screen
+            if(!gameRunning) return; 
             isPaused = !isPaused; 
             document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; 
+            
+            // SYNC MUSIC WITH PAUSE
+            const music = document.getElementById("bgMusic");
+            isPaused ? music.pause() : music.play();
+
             if(!isPaused) gameLoop(); 
         }
 
@@ -404,7 +414,6 @@
             }
         }
 
-        // --- THE FIX: Smart Keyboard Listener with Buffer ---
         document.addEventListener("keydown", e => {
             if (document.activeElement.tagName === "INPUT") return;
 
@@ -414,7 +423,6 @@
             
             if (isPaused || !gameRunning) return;
             
-            // Update BUFFER instead of live dx/dy to prevent 180-degree self-kills
             if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { nextDirection = { dx: -20, dy: 0 }; }
             if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { nextDirection = { dx: 0, dy: -20 }; }
             if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { nextDirection = { dx: 20, dy: 0 }; }

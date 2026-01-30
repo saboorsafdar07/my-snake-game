@@ -95,8 +95,9 @@
 </head>
 <body>
 
-    <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2026/01/23/audio_d4455d1ce6.mp3?filename=game-gaming-video-game-music-471936.mp3"></audio>
-
+    <audio id="bgMusic" loop preload="auto">
+    <source src="https://incompetech.com/music/royalty-free/mp3-nowrap/Fluffing%20a%20Duck.mp3" type="audio/mpeg">
+</audio>
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
         <input type="text" id="playerName" placeholder="Name" maxlength="12">
@@ -430,5 +431,6 @@
     </script>
 </body>
 </html>
+
 
 

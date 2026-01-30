@@ -18,9 +18,8 @@
         }
         #pause-overlay, #leaderboard-screen, #game-over-screen { display: none; }
         
-        /* Fixed size for leaderboard with scrolling */
         #leaderboard-screen {
-            width: 350px;
+            width: 380px;
             max-height: 80vh;
             overflow-y: auto;
         }
@@ -90,6 +89,7 @@
         #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
         .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
         .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
+        .mvp-crown { color: gold; font-size: 18px; text-shadow: 0 0 10px gold; }
     </style>
 </head>
 <body>
@@ -143,7 +143,7 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- FULL ROAST LIBRARIES (ZERO SKIPS) ---
+        // --- FULL ROAST LIBRARIES ---
         const startRoasts = [
             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
@@ -207,6 +207,8 @@
         let foodX, foodY, toxicity = 0, isRage = false;
         let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
         let finalRoastMessage = "";
+        let globalBestScore = 0;
+        let globalBestName = "NONE";
 
         let audioCtx;
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -230,19 +232,26 @@
                 if (data) {
                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
                     const top = sorted[0];
-                    document.getElementById("highScoreVal").innerText = top.score || 0;
-                    document.getElementById("highScoreName").innerText = (top.name || "NONE").toUpperCase();
+                    globalBestScore = top.score || 0;
+                    globalBestName = top.name || "NONE";
+                    document.getElementById("highScoreVal").innerText = globalBestScore;
+                    document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
                 }
             } catch(e) {}
         }
 
         async function saveScore(name, score) {
             if (score <= 0) return;
+            const playerId = name.toLowerCase(); 
             try {
-                await fetch(DB_URL + "scores.json", {
-                    method: 'POST',
-                    body: JSON.stringify({ name: name, score: score, date: new Date().toISOString() })
-                });
+                const check = await fetch(`${DB_URL}scores/${playerId}.json`);
+                const existing = await check.json();
+                if (!existing || score > existing.score) {
+                    await fetch(`${DB_URL}scores/${playerId}.json`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ name: name, score: score, date: new Date().toISOString() })
+                    });
+                }
             } catch(e) {}
         }
 
@@ -265,13 +274,16 @@
                 const data = await response.json();
                 if (data) {
                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                    
                     let html = `<div class="lb-header">TOP 5 CHAMPIONS</div>`;
-                    html += sorted.slice(0, 5).map((s, i) => `<div class="lb-item"><span>${i+1}. ${s.name || "Anon"}</span><span>${s.score || 0}</span></div>`).join('');
-                    
+                    html += sorted.slice(0, 5).map((s, i) => {
+                        const crown = (i === 0) ? `<span class="mvp-crown"> 👑 MVP</span>` : '';
+                        return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
+                    }).join('');
                     html += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
-                    html += sorted.map((s, i) => `<div class="lb-item"><span>${i+1}. ${s.name || "Anon"}</span><span>${s.score || 0}</span></div>`).join('');
-                    
+                    html += sorted.map((s, i) => {
+                        const crown = (i === 0) ? ` 👑` : '';
+                        return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
+                    }).join('');
                     list.innerHTML = html;
                 } else { list.innerHTML = "No records."; }
             } catch(e) { list.innerHTML = "Error."; }
@@ -281,10 +293,7 @@
 
         function attemptStart() {
             const name = document.getElementById("playerName").value.trim();
-            
-            // ADMIN KEY CHECK
             if (name === "saboor07") { resetLeaderboard(); return; }
-
             if (name.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
             currentPlayer = name;
             initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -341,6 +350,12 @@
                 snake.forEach((p, i) => {
                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
                     ctx.fillRect(p.x, p.y, 18, 18);
+                    
+                    // RENDER CROWN ON HEAD IF MVP
+                    if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
+                        ctx.fillStyle = "gold"; ctx.font = "20px Arial"; ctx.textAlign = "center";
+                        ctx.fillText("👑", p.x + 10, p.y - 5);
+                    }
                 });
 
                 if (chatTimer > 0) {
@@ -362,7 +377,6 @@
                 finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
             }
             await saveScore(currentPlayer, totalScore);
-            
             document.getElementById("over-roast").innerText = finalRoastMessage;
             document.getElementById("over-score").innerText = "SCORE: " + totalScore;
             document.getElementById("game-over-screen").style.display = "block";
@@ -370,21 +384,25 @@
 
         function shareToWhatsApp() {
             const gameLink = window.location.href;
-            const text = `🐍 THE SNAKE GAME 🐍\n\nI just scored ${totalScore}!\n\nSystem says: "${finalRoastMessage}"\n\nThink you can do better or are you a potato too? Try it here: ${gameLink}`;
-            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+            let text = "";
+            if (totalScore >= globalBestScore && totalScore > 0) {
+                text = `👑 I AM THE MVP! 👑\n\nI just set a NEW WORLD RECORD of ${totalScore} in The Snake!\n\nI am the King of the leaderboard. Can any of you losers even come close to my throne? 🐍✨\n\nTry to beat me here: ${gameLink}`;
+            } else {
+                text = `🐍 THE SNAKE GAME 🐍\n\nI scored ${totalScore}!\n\nSystem says: "${finalRoastMessage}"\n\nThink you can do better or are you a potato too? Try it here: ${gameLink}`;
+            }
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function togglePause() { isPaused = !isPaused; document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; if(!isPaused) gameLoop(); }
         
         document.addEventListener("keydown", e => {
-            if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+            if ([32, 37, 38, 39, 40, 87, 65, 83, 68].includes(e.keyCode)) e.preventDefault();
             if (e.keyCode === 80) togglePause();
             if (isPaused || !gameRunning) return;
-            if (e.keyCode === 37 && dx === 0) { dx = -20; dy = 0; }
-            if (e.keyCode === 38 && dy === 0) { dx = 0; dy = -20; }
-            if (e.keyCode === 39 && dx === 0) { dx = 20; dy = 0; }
-            if (e.keyCode === 40 && dy === 0) { dx = 0; dy = 20; }
+            if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { dx = -20; dy = 0; }
+            if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { dx = 0; dy = -20; }
+            if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { dx = 20; dy = 0; }
+            if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { dx = 0; dy = 20; }
         });
 
         window.onload = fetchGlobalHigh;

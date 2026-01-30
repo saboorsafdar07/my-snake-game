@@ -95,7 +95,10 @@
 </head>
 <body>
 
-    <audio id="bgMusic" loop src="https://www.chosic.com/wp-content/uploads/2021/09/Elevator-music(chosic.com).mp3"></audio>
+    <audio id="bgMusic" loop preload="auto">
+        <source src="https://raw.githubusercontent.com/the-saboor/music/main/bg-track.mp3" type="audio/mpeg">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
@@ -285,10 +288,18 @@
             currentPlayer = nameInput;
             initAudio();
 
-            // --- START BACKGROUND MUSIC ---
+            // --- IMPROVED MUSIC START ---
             const music = document.getElementById("bgMusic");
             music.volume = 0.4; 
-            music.play().catch(e => console.log("Audio play failed: ", e));
+            const playPromise = music.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log("Music started successfully!");
+                }).catch(error => {
+                    console.log("Music blocked by browser. Try clicking the game area again.");
+                });
+            }
 
             document.getElementById("start-screen").style.display = "none";
             document.getElementById("toxic-ui").style.display = "flex"; 

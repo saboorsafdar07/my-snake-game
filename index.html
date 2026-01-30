@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Snake - Saboor's Global Rage</title>
     <style>
         body {
@@ -96,7 +97,7 @@
 
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
-        <input type="text" id="playerName" placeholder="name" maxlength="12">
+        <input type="text" id="playerName" placeholder="Enter Your Name" maxlength="12">
         <button onclick="attemptStart()">A Quick Start ⚡</button>
         <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
         <div class="credits">Created by Saboor 🍭</div>
@@ -104,13 +105,13 @@
 
     <div id="leaderboard-screen">
         <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
-        <div id="leaderboard-list">Loading...</div>
+        <div id="leaderboard-list">Loading players...</div>
         <button onclick="closeLeaderboard()">CLOSE</button>
     </div>
 
     <div id="game-over-screen">
         <h1 id="over-title">GAME OVER</h1>
-        <p id="over-roast" style="color: #ff0055; font-weight: bold;"></p>
+        <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
         <h2 id="over-score">SCORE: 0</h2>
         <button onclick="location.reload()">TRY AGAIN</button>
         <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
@@ -137,13 +138,13 @@
     </div>
 
     <script>
-        // --- CONFIG ---
+        // --- DATABASE CONFIG ---
         const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/"; 
 
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- FULL ROAST LIBRARIES ---
+        // --- FULL ROAST LIBRARIES (DO NOT SKIP) ---
         const startRoasts = [
             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
@@ -190,18 +191,10 @@
             "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", 
             "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.", 
             "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.", 
-            "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE.",
-            "PATHETIC ATTEMPT.", "SCARE THE FOOD AWAY?", "YOU SCARED OF THE APPLE?", "IT WON'T BITE!", "TRY HARDER!", "NOT EVEN CLOSE.",
-            "BRAIN DELAY!", "ERROR: AIM NOT FOUND.", "WHIFF OF THE CENTURY.", "TAKE A LAP.", "YOU NEED A TUTORIAL?", "IT'S RED. HIT IT.", 
-            "HARD TO WATCH.", "I'M LOSING HOPE.", "SNAKE IS HUNGRY, BRO.", "FEED THE SNAKE!", "ARE YOU AFRAID OF WINNING?", 
-            "LOOSER ALERT!", "NICE MISS, GENIUS.", "YOU'RE TRYING, I GUESS.", "A FOR EFFORT, F FOR SKILL.", "STOP MISSING!", 
-            "POINTLESS.", "ZERO ACCURACY.", "BOT BEHAVIOR.", "ARE YOU A BOT.", "DEFECTIVE PLAYER.", "RETURN TO SENDER.", 
-            "GARBAGE!", "POOP REFLEXES.", "HOES MAD.", "COULDN'T HIT WATER FROM A BOAT.", "WHIFF!", "SWISH!", "NOT TODAY.", 
-            "SNAKE SAYS LOL.", "UNLUCKY? OR JUST BAD?", "PURE COMEDY!", "YOU'RE MY FAVORITE COMEDIAN.", "HILARIOUS MISS.", 
-            "KEEP TRYING, MAYBE BY 2030?", "SLOW!", "TURTLE!", "STATIONARY!", "DEAD!", "GHOSTED THE FOOD!", "FRIENDZONED THE APPLE!"
+            "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
         ];
 
-        // --- ENGINE ---
+        // --- GAME ENGINE VARIABLES ---
         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
         let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
         let foodX, foodY, toxicity = 0, isRage = false;
@@ -225,6 +218,7 @@
             o.start(); o.stop(audioCtx.currentTime + 0.1);
         }
 
+        // --- BRAIN: SMART PLAYER MEMORY ---
         async function fetchGlobalHigh() {
             try {
                 const response = await fetch(DB_URL + "scores.json");
@@ -242,63 +236,66 @@
 
         async function saveScore(name, score) {
             if (score <= 0) return;
-            const playerId = name.toLowerCase(); 
+            // Use Brain: Lowercase ID so 'SABOOR' and 'saboor' are the same player
+            const playerId = name.toLowerCase().trim(); 
+            
             try {
                 const check = await fetch(`${DB_URL}scores/${playerId}.json`);
                 const existing = await check.json();
+                
+                // Only update if it's a new personal high or new player
                 if (!existing || score > existing.score) {
                     await fetch(`${DB_URL}scores/${playerId}.json`, {
                         method: 'PUT',
                         body: JSON.stringify({ name: name, score: score, date: new Date().toISOString() })
                     });
                 }
-            } catch(e) {}
+            } catch(e) { console.error("Save Error"); }
         }
 
-        async function resetLeaderboard() {
-            if (confirm("ADMIN DETECTED: NUKE THE LEADERBOARD?")) {
-                try {
-                    await fetch(DB_URL + "scores.json", { method: 'DELETE' });
-                    alert("Leaderboard cleared. You monster.");
-                    location.reload();
-                } catch(e) { alert("Failed to clear."); }
-            }
-        }
-
+        // --- UI & SCREENS ---
         async function showLeaderboard() {
             document.getElementById("leaderboard-screen").style.display = "block";
             const list = document.getElementById("leaderboard-list");
-            list.innerHTML = "Fetching...";
+            list.innerHTML = "Fetching Hall of Fame...";
             try {
                 const response = await fetch(DB_URL + "scores.json");
                 const data = await response.json();
                 if (data) {
                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                    let html = `<div class="lb-header">TOP 5 CHAMPIONS</div>`;
+                    
+                    let html = `<div class="lb-header">TOP 5 LEGENDS</div>`;
                     html += sorted.slice(0, 5).map((s, i) => {
                         const crown = (i === 0) ? `<span class="mvp-crown"> 👑 MVP</span>` : '';
                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
                     }).join('');
+                    
                     html += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
                     html += sorted.map((s, i) => {
                         const crown = (i === 0) ? ` 👑` : '';
                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
                     }).join('');
+                    
                     list.innerHTML = html;
-                } else { list.innerHTML = "No records."; }
-            } catch(e) { list.innerHTML = "Error."; }
+                } else { list.innerHTML = "No players found. Be the first!"; }
+            } catch(e) { list.innerHTML = "Failed to connect to Saboor's Server."; }
         }
 
         function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
 
         function attemptStart() {
-            const name = document.getElementById("playerName").value.trim();
-            if (name === "saboor07") { resetLeaderboard(); return; }
-            if (name.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
-            currentPlayer = name;
-            initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();
+            const nameInput = document.getElementById("playerName").value.trim();
+            if (nameInput === "saboor07") { resetLeaderboard(); return; }
+            if (nameInput.length < 2) { 
+                alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]); 
+                return; 
+            }
+            currentPlayer = nameInput;
+            initAudio();
             document.getElementById("start-screen").style.display = "none";
-            gameRunning = true; createFood(); gameLoop();
+            gameRunning = true; 
+            createFood(); 
+            gameLoop();
         }
 
         function createFood() {
@@ -307,15 +304,21 @@
             wasNear = false;
         }
 
+        // --- CORE GAME LOOP ---
         function gameLoop() {
             if (!gameRunning || isPaused) return;
+            
+            // Speed scaling
             let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
             
             setTimeout(() => {
                 ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
-                let nextX = snake[0].x + dx; let nextY = snake[0].y + dy;
+                
+                let nextX = snake[0].x + dx; 
+                let nextY = snake[0].y + dy;
                 let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
 
+                // Toxicity Logic
                 if (dist < 35 && (nextX !== foodX || nextY !== foodY)) wasNear = true;
                 else if (wasNear && dist > 45) {
                     toxicity = Math.min(100, toxicity + 20); 
@@ -329,40 +332,48 @@
 
                 isRage = toxicity >= 100;
                 document.getElementById("toxic-bar").style.height = toxicity + "%";
+                
+                // Draw Food
                 ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
                 ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
                 const head = { x: nextX, y: nextY };
                 snake.unshift(head);
 
+                // Eating
                 if (head.x === foodX && head.y === foodY) {
                     totalScore += 10;
                     toxicity = Math.max(0, toxicity - 40);
                     missCombo = 0; sfx(600, 900);
                     document.getElementById("scoreVal").innerText = totalScore;
-                    fetchGlobalHigh(); createFood();
+                    fetchGlobalHigh(); 
+                    createFood();
                 } else { snake.pop(); }
 
+                // Death Check
                 if (head.x < 0 || head.x >= 800 || head.y < 0 || head.y >= 600 || snake.slice(1).some(p => p.x === head.x && p.y === head.y)) {
                     sfx(150, 50); handleGameOver(); return;
                 }
 
+                // Draw Snake
                 snake.forEach((p, i) => {
                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
                     ctx.fillRect(p.x, p.y, 18, 18);
                     
-                    // RENDER CROWN ON HEAD IF MVP
+                    // CROWN FOR MVP
                     if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
                         ctx.fillStyle = "gold"; ctx.font = "20px Arial"; ctx.textAlign = "center";
-                        ctx.fillText("👑", p.x + 10, p.y - 5);
+                        ctx.fillText("👑", p.x + 10, p.y - 6);
                     }
                 });
 
+                // Roasting text
                 if (chatTimer > 0) {
-                    ctx.fillStyle = "white"; ctx.font = "13px Arial"; ctx.textAlign = "center";
+                    ctx.fillStyle = "white"; ctx.font = "14px Courier New"; ctx.textAlign = "center";
                     ctx.fillText(chatMsg, snake[0].x + 10, snake[0].y - 15);
                     chatTimer--;
                 }
+
                 gameLoop();
             }, speed);
         }
@@ -370,13 +381,16 @@
         async function handleGameOver() {
             gameRunning = false;
             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
+            
             if (totalScore > localHigh) {
                 finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
                 localStorage.setItem("snakeHighScore", totalScore);
             } else {
                 finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
             }
+
             await saveScore(currentPlayer, totalScore);
+            
             document.getElementById("over-roast").innerText = finalRoastMessage;
             document.getElementById("over-score").innerText = "SCORE: " + totalScore;
             document.getElementById("game-over-screen").style.display = "block";
@@ -386,25 +400,43 @@
             const gameLink = window.location.href;
             let text = "";
             if (totalScore >= globalBestScore && totalScore > 0) {
-                text = `👑 I AM THE MVP! 👑\n\nI just set a NEW WORLD RECORD of ${totalScore} in The Snake!\n\nI am the King of the leaderboard. Can any of you losers even come close to my throne? 🐍✨\n\nTry to beat me here: ${gameLink}`;
+                text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the Record with a score of ${totalScore} in The Snake!\n\nI own the leaderboard. Bow down! 🐍✨\n\nChallenge me: ${gameLink}`;
             } else {
-                text = `🐍 THE SNAKE GAME 🐍\n\nI scored ${totalScore}!\n\nSystem says: "${finalRoastMessage}"\n\nThink you can do better or are you a potato too? Try it here: ${gameLink}`;
+                text = `🐍 THE SNAKE GAME 🐍\n\nMy Score: ${totalScore}\n\nSystem Roasted Me: "${finalRoastMessage}"\n\nCan you do better or are you a potato? ${gameLink}`;
             }
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
-        function togglePause() { isPaused = !isPaused; document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; if(!isPaused) gameLoop(); }
-        
+        function togglePause() { 
+            isPaused = !isPaused; 
+            document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; 
+            if(!isPaused) gameLoop(); 
+        }
+
+        async function resetLeaderboard() {
+            if (confirm("NUKE THE WHOLE DATABASE?")) {
+                await fetch(DB_URL + "scores.json", { method: 'DELETE' });
+                location.reload();
+            }
+        }
+
+        // --- CONTROLS: WASD + ARROWS ---
         document.addEventListener("keydown", e => {
             if ([32, 37, 38, 39, 40, 87, 65, 83, 68].includes(e.keyCode)) e.preventDefault();
             if (e.keyCode === 80) togglePause();
             if (isPaused || !gameRunning) return;
+            
+            // Left (A or Arrow)
             if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { dx = -20; dy = 0; }
+            // Up (W or Arrow)
             if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { dx = 0; dy = -20; }
+            // Right (D or Arrow)
             if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { dx = 20; dy = 0; }
+            // Down (S or Arrow)
             if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { dx = 0; dy = 20; }
         });
 
+        // Initialize WR on load
         window.onload = fetchGlobalHigh;
     </script>
 </body>

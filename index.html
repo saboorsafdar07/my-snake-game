@@ -38,10 +38,11 @@
             justify-content: center;
         }
 
+        /* Toxicity meter hidden on start page */
         .toxic-wrapper {
             position: absolute;
             right: -30px; 
-            display: flex;
+            display: none; 
             flex-direction: column;
             align-items: center;
         }
@@ -129,7 +130,7 @@
 
     <div class="main-container">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div class="toxic-wrapper">
+        <div class="toxic-wrapper" id="toxic-ui">
             <div class="toxic-label">TOXICITY</div>
             <div class="toxic-container-vertical">
                 <div id="toxic-bar"></div>
@@ -144,7 +145,7 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- FULL ROAST LIBRARIES (DO NOT SKIP) ---
+        // --- FULL ROAST LIBRARIES ---
         const startRoasts = [
             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
@@ -194,7 +195,7 @@
             "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
         ];
 
-        // --- GAME ENGINE VARIABLES ---
+        // --- GAME VARIABLES ---
         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
         let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
         let foodX, foodY, toxicity = 0, isRage = false;
@@ -218,7 +219,6 @@
             o.start(); o.stop(audioCtx.currentTime + 0.1);
         }
 
-        // --- BRAIN: SMART PLAYER MEMORY ---
         async function fetchGlobalHigh() {
             try {
                 const response = await fetch(DB_URL + "scores.json");
@@ -236,14 +236,10 @@
 
         async function saveScore(name, score) {
             if (score <= 0) return;
-            // Use Brain: Lowercase ID so 'SABOOR' and 'saboor' are the same player
             const playerId = name.toLowerCase().trim(); 
-            
             try {
                 const check = await fetch(`${DB_URL}scores/${playerId}.json`);
                 const existing = await check.json();
-                
-                // Only update if it's a new personal high or new player
                 if (!existing || score > existing.score) {
                     await fetch(`${DB_URL}scores/${playerId}.json`, {
                         method: 'PUT',
@@ -253,7 +249,6 @@
             } catch(e) { console.error("Save Error"); }
         }
 
-        // --- UI & SCREENS ---
         async function showLeaderboard() {
             document.getElementById("leaderboard-screen").style.display = "block";
             const list = document.getElementById("leaderboard-list");
@@ -263,21 +258,18 @@
                 const data = await response.json();
                 if (data) {
                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                    
                     let html = `<div class="lb-header">TOP 5 LEGENDS</div>`;
                     html += sorted.slice(0, 5).map((s, i) => {
                         const crown = (i === 0) ? `<span class="mvp-crown"> 👑 MVP</span>` : '';
                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
                     }).join('');
-                    
                     html += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
                     html += sorted.map((s, i) => {
                         const crown = (i === 0) ? ` 👑` : '';
                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
                     }).join('');
-                    
                     list.innerHTML = html;
-                } else { list.innerHTML = "No players found. Be the first!"; }
+                } else { list.innerHTML = "No records found."; }
             } catch(e) { list.innerHTML = "Failed to connect to Saboor's Server."; }
         }
 
@@ -293,6 +285,7 @@
             currentPlayer = nameInput;
             initAudio();
             document.getElementById("start-screen").style.display = "none";
+            document.getElementById("toxic-ui").style.display = "flex"; // SHOW TOXICITY NOW
             gameRunning = true; 
             createFood(); 
             gameLoop();
@@ -304,21 +297,16 @@
             wasNear = false;
         }
 
-        // --- CORE GAME LOOP ---
         function gameLoop() {
             if (!gameRunning || isPaused) return;
-            
-            // Speed scaling
             let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
             
             setTimeout(() => {
                 ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
-                
                 let nextX = snake[0].x + dx; 
                 let nextY = snake[0].y + dy;
                 let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
 
-                // Toxicity Logic
                 if (dist < 35 && (nextX !== foodX || nextY !== foodY)) wasNear = true;
                 else if (wasNear && dist > 45) {
                     toxicity = Math.min(100, toxicity + 20); 
@@ -332,15 +320,12 @@
 
                 isRage = toxicity >= 100;
                 document.getElementById("toxic-bar").style.height = toxicity + "%";
-                
-                // Draw Food
                 ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
                 ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
                 const head = { x: nextX, y: nextY };
                 snake.unshift(head);
 
-                // Eating
                 if (head.x === foodX && head.y === foodY) {
                     totalScore += 10;
                     toxicity = Math.max(0, toxicity - 40);
@@ -350,30 +335,24 @@
                     createFood();
                 } else { snake.pop(); }
 
-                // Death Check
                 if (head.x < 0 || head.x >= 800 || head.y < 0 || head.y >= 600 || snake.slice(1).some(p => p.x === head.x && p.y === head.y)) {
                     sfx(150, 50); handleGameOver(); return;
                 }
 
-                // Draw Snake
                 snake.forEach((p, i) => {
                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
                     ctx.fillRect(p.x, p.y, 18, 18);
-                    
-                    // CROWN FOR MVP
                     if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
                         ctx.fillStyle = "gold"; ctx.font = "20px Arial"; ctx.textAlign = "center";
                         ctx.fillText("👑", p.x + 10, p.y - 6);
                     }
                 });
 
-                // Roasting text
                 if (chatTimer > 0) {
                     ctx.fillStyle = "white"; ctx.font = "14px Courier New"; ctx.textAlign = "center";
                     ctx.fillText(chatMsg, snake[0].x + 10, snake[0].y - 15);
                     chatTimer--;
                 }
-
                 gameLoop();
             }, speed);
         }
@@ -381,16 +360,13 @@
         async function handleGameOver() {
             gameRunning = false;
             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
-            
             if (totalScore > localHigh) {
                 finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
                 localStorage.setItem("snakeHighScore", totalScore);
             } else {
                 finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
             }
-
             await saveScore(currentPlayer, totalScore);
-            
             document.getElementById("over-roast").innerText = finalRoastMessage;
             document.getElementById("over-score").innerText = "SCORE: " + totalScore;
             document.getElementById("game-over-screen").style.display = "block";
@@ -400,14 +376,15 @@
             const gameLink = window.location.href;
             let text = "";
             if (totalScore >= globalBestScore && totalScore > 0) {
-                text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the Record with a score of ${totalScore} in The Snake!\n\nI own the leaderboard. Bow down! 🐍✨\n\nChallenge me: ${gameLink}`;
+                text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the Record with a score of ${totalScore} in The Snake!\n\nChallenge me: ${gameLink}`;
             } else {
-                text = `🐍 THE SNAKE GAME 🐍\n\nMy Score: ${totalScore}\n\nSystem Roasted Me: "${finalRoastMessage}"\n\nCan you do better or are you a potato? ${gameLink}`;
+                text = `🐍 THE SNAKE GAME 🐍\n\nMy Score: ${totalScore}\n\nSystem Roasted Me: "${finalRoastMessage}"\n\nChallenge: ${gameLink}`;
             }
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         function togglePause() { 
+            if(!gameRunning) return; // Prevent pausing on start screen
             isPaused = !isPaused; 
             document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; 
             if(!isPaused) gameLoop(); 
@@ -420,23 +397,25 @@
             }
         }
 
-        // --- CONTROLS: WASD + ARROWS ---
+        // --- THE FIX: Smart Keyboard Listener ---
         document.addEventListener("keydown", e => {
+            // IF TYPING IN NAME BOX, STOP GAME CONTROLS
+            if (document.activeElement.tagName === "INPUT") return;
+
             if ([32, 37, 38, 39, 40, 87, 65, 83, 68].includes(e.keyCode)) e.preventDefault();
-            if (e.keyCode === 80) togglePause();
+            
+            // P key for pause (Only if game is active)
+            if (e.keyCode === 80 && gameRunning) togglePause();
+            
             if (isPaused || !gameRunning) return;
             
-            // Left (A or Arrow)
+            // WASD + Arrows Movement
             if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { dx = -20; dy = 0; }
-            // Up (W or Arrow)
             if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { dx = 0; dy = -20; }
-            // Right (D or Arrow)
             if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { dx = 20; dy = 0; }
-            // Down (S or Arrow)
             if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { dx = 0; dy = 20; }
         });
 
-        // Initialize WR on load
         window.onload = fetchGlobalHigh;
     </script>
 </body>

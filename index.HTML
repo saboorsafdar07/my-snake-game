@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Snake - Rage Edition</title>
+    <style>
+        body {
+            background-color: #0d0221;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; color: #00f2ff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; user-select: none;
+        }
+        #start-screen, #pause-overlay {
+            position: absolute; background: rgba(15, 5, 36, 0.98);
+            padding: 40px; border: 3px solid #00f2ff; text-align: center;
+            z-index: 100; box-shadow: 0 0 50px #00f2ff;
+        }
+        #pause-overlay { display: none; border-color: #ff0055; }
+        
+        .credits {
+            position: absolute; bottom: 10px; right: 15px;
+            font-size: 12px; color: #00f2ff; opacity: 0.7;
+            text-shadow: 0 0 5px #00f2ff;
+        }
+
+        .main-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toxic-wrapper {
+            position: absolute;
+            right: -30px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .toxic-label {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #ff0055;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
+
+        .toxic-container-vertical {
+            width: 10px;
+            height: 300px; 
+            background: #1a1a3a;
+            border: 2px solid #00f2ff;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+        }
+        #toxic-bar {
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(0deg, #00f2ff, #ff0055);
+            transition: height 0.3s ease;
+        }
+
+        input {
+            background: #16213e; border: 2px solid #00f2ff; color: white;
+            padding: 12px; margin-bottom: 35px; width: 220px;
+            text-align: center; font-size: 18px; outline: none;
+            display: block; margin: 20px auto 35px;
+        }
+
+        button {
+            background: #ff0055; color: white; border: none;
+            padding: 15px 35px; font-weight: bold; font-size: 20px;
+            cursor: pointer; text-transform: uppercase;
+        }
+
+        .stats-bar {
+            display: flex; justify-content: space-between;
+            width: 800px; padding: 10px 20px; font-size: 18px;
+            background: rgba(0, 242, 255, 0.1); margin-bottom: 10px;
+        }
+        canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
+        <input type="text" id="playerName" placeholder="name" maxlength="12">
+        <button onclick="attemptStart()">A Quick Start ⚡</button>
+        <div class="credits">Created by Saboor 🍭</div>
+    </div>
+
+    <div id="pause-overlay">
+        <h1>PAUSED</h1>
+        <button onclick="togglePause()">RESUME (P)</button>
+    </div>
+
+    <div class="stats-bar">
+        <div>SCORE: <span id="scoreVal">0</span></div>
+        <div style="color: #ff0055;">RECORD: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
+    </div>
+
+    <div class="main-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="toxic-wrapper">
+            <div class="toxic-label">TOXICITY</div>
+            <div class="toxic-container-vertical">
+                <div id="toxic-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const startRoasts = [
+            "Type a name first, you uneducated walnut!", "Are you allergic to keyboards? NAME. NOW.",
+            "Identify yourself so I know who to laugh at.", "Name box is empty, just like your future.",
+            "I'm not playing with a ghost. Put a name in, genius.", "Is your brain on airplane mode? TYPE A NAME.",
+            "Error 404: Player's identity not found.", "Even a goldfish has a name. What's yours?",
+            "Enter a name or go back to nursery school.", "I can't track your failures without a name.",
+            "Type something! Anything! You useless brick!", "Input required. Intelligence not expected.",
+            "Who are you? Nobody? Thought so. Enter a name.", "Your keyboard is for typing, not just for drooling on.",
+            "Waiting for a name... any century now.", "My code is faster than your typing. HURRY UP.",
+            "A name. 3 letters. Can you manage that?", "Stop staring at the button and type your name.",
+            "The input box isn't a mirror, don't just look at it.", "I'm losing CPU cycles waiting for you. NAME."
+        ];
+
+        const crashRoasts = [
+            "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY, AND YOU HIT IT.", 
+            "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "YOUR SCORE IS LOWER THAN YOUR IQ.",
+            "WAS THAT A COLLISION OR A CRY FOR HELP?", "EVEN THE SNAKE IS DISAPPOINTED IN YOU.",
+            "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.", 
+            "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?", "THE SNAKE DIED OF SHAME, NOT THE WALL.", 
+            "A POTATO HAS BETTER REFLEXES.", "STOP WASTING ELECTRICITY.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", 
+            "IS THIS YOUR FIRST TIME USING A COMPUTER?", "BRAVO! You hit the only thing you were supposed to avoid.", 
+            "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "MAYBE TRY LUDO? IT'S TURN-BASED.", 
+            "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", 
+            "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "YOUR HIGH SCORE IS MY STARTING POINT.", 
+            "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.", "DON'T CRY. JUST GET BETTER.", 
+            "YOU FAILED. AGAIN. SURPRISE SURPRISE."
+        ];
+
+        const backhandedPraise = [
+            "NEW RECORD! You're finally the smartest among the idiots.",
+            "HIGH SCORE! Mom must be so proud of her basement dweller.",
+            "NEW RECORD! Luck is a powerful thing for the brainless.",
+            "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
+            "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory."
+        ];
+
+        const missRoasts = [
+            "EMOTIONAL DAMAGE!", "WHEEZE... YOU MISSED?!", "MY GRANDMA TARGETS BETTER!", "NICE WHIFF!", "ARE YOU PLAYING WITH YOUR TOES?", 
+            "STOP EMBARRASSING YOURSELF!", "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", 
+            "IS YOUR MONITOR ON?", "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.",
+            "CLOSE BUT NO CIGAR!", "MAYBE NEXT TIME, BUDDY.", "LOL, TRASH.", "DID YOU BLINK?", "SNAKE SAYS NO.", "TARGET LOST!",
+            "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.",
+            "YOU'RE BORED, AREN'T YOU?", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.", "HEHE, MISSED.", "STILL ZERO SKILL.",
+            "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.", "WHY ARE YOU LIKE THIS?", "FAIL!",
+            "SLOPPY!", "MY GRANDPA IS FASTER!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "LMAO!", "ROOKIE MOVE.",
+            "PATHETIC ATTEMPT.", "SCARE THE FOOD AWAY?", "YOU SCARED OF THE APPLE?", "IT WON'T BITE!", "TRY HARDER!", "NOT EVEN CLOSE.",
+            "YOU'RE LAGGING (IN REAL LIFE).", "BRAIN DELAY!", "ERROR: AIM NOT FOUND.", "WHIFF OF THE CENTURY.", "SMELL IT, DON'T EAT IT?",
+            "TAKE A LAP.", "YOU NEED A TUTORIAL?", "IT'S RED. HIT IT.", "HARD TO WATCH.", "I'M LOSING HOPE.", "SNAKE IS HUNGRY, BRO.",
+            "FEED THE SNAKE!", "ARE YOU AFRAID OF WINNING?", "LOOSER ALERT!", "NICE MISS, GENIUS.", "YOU'RE TRYING, I GUESS.",
+            "A FOR EFFORT, F FOR SKILL.", "STOP MISSING!", "POINTLESS.", "ZERO ACCURACY.", "BOT BEHAVIOR.", "ARE YOU A BOT.",
+            "DEFECTIVE PLAYER.", "RETURN TO SENDER.", "GARBAGE!", "POOP REFLEXES.", "GIT GUD.", "STAY MAD.", "HOES MAD.",
+            "COULDN'T HIT WATER IF YOU FELL OFF A BOAT.", "WHIFF!", "SWISH!", "NOT TODAY.", "SNAKE SAYS LOL.", "UNLUCKY? OR JUST BAD?",
+            "PURE COMEDY!", "YOU'RE MY FAVORITE COMEDIAN.", "HILARIOUS MISS.", "KEEP TRYING, MAYBE BY 2030?", "SLOW!", "TURTLE!",
+            "SNAIL!", "STATIONARY!", "DEAD!", "GHOSTED THE FOOD!", "FRIENDZONED THE APPLE!", "APPLE REJECTED YOU!"
+        ];
+
+        let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
+        let ghostPath = JSON.parse(localStorage.getItem("ghostData") || "[]");
+        let currentPath = [];
+        let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
+        let foodX, foodY, toxicity = 0, frame = 0, isRage = false;
+        let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function sfx(f1, f2) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(f1, audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(f2, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.connect(audioCtx.destination);
+            o.connect(g); o.start(); o.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function attemptStart() {
+            const name = document.getElementById("playerName").value.trim();
+            if (name.length < 3) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
+            currentPlayer = name;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById("start-screen").style.display = "none";
+            gameRunning = true; createFood(); gameLoop();
+        }
+
+        function createFood() {
+            foodX = Math.floor(Math.random() * 39) * 20;
+            foodY = Math.floor(Math.random() * 29) * 20;
+            wasNear = false;
+        }
+
+        function gameLoop() {
+            if (!gameRunning || isPaused) return;
+            let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
+            
+            setTimeout(() => {
+                ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
+                
+                if(ghostPath[frame]) {
+                    ctx.fillStyle = "rgba(0, 242, 255, 0.1)";
+                    ghostPath[frame].forEach(p => ctx.fillRect(p.x, p.y, 18, 18));
+                }
+
+                let nextX = snake[0].x + dx; let nextY = snake[0].y + dy;
+                let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
+
+                if (dist < 35 && (nextX !== foodX || nextY !== foodY)) wasNear = true;
+                else if (wasNear && dist > 45) {
+                    toxicity = Math.min(100, toxicity + 20); 
+                    missCombo++;
+                    if (missCombo >= 2) {
+                        chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)];
+                        chatTimer = 25;
+                    }
+                    wasNear = false;
+                }
+
+                isRage = toxicity >= 100;
+                document.getElementById("toxic-bar").style.height = toxicity + "%";
+
+                ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
+                ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
+
+                const head = { x: nextX, y: nextY };
+                snake.unshift(head);
+                currentPath.push(JSON.parse(JSON.stringify(snake)));
+
+                if (head.x === foodX && head.y === foodY) {
+                    totalScore += 10;
+                    toxicity = Math.max(0, toxicity - 40);
+                    missCombo = 0;
+                    sfx(600, 900);
+                    document.getElementById("scoreVal").innerText = totalScore;
+                    createFood();
+                } else { snake.pop(); }
+
+                if (head.x < 0 || head.x >= 800 || head.y < 0 || head.y >= 600 || snake.slice(1).some(p => p.x === head.x && p.y === head.y)) {
+                    handleGameOver(); return;
+                }
+
+                snake.forEach((p, i) => {
+                    ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
+                    ctx.fillRect(p.x, p.y, 18, 18);
+                });
+
+                if (chatTimer > 0) {
+                    ctx.fillStyle = "white"; ctx.font = "13px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(chatMsg, snake[0].x + 10, snake[0].y - 15);
+                    chatTimer--;
+                }
+
+                frame++;
+                gameLoop();
+            }, speed);
+        }
+
+        function handleGameOver() {
+            gameRunning = false; sfx(150, 50);
+            const oldHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
+            let endMsg = (totalScore > oldHigh) ? backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)] : crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
+            
+            if (totalScore > oldHigh) {
+                localStorage.setItem("snakeHighScore", totalScore);
+                localStorage.setItem("snakeHighName", currentPlayer);
+                localStorage.setItem("ghostData", JSON.stringify(currentPath));
+            }
+            alert(endMsg.toUpperCase() + "\n\nSCORE: " + totalScore);
+            location.reload();
+        }
+
+        function togglePause() { isPaused = !isPaused; document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; if(!isPaused) gameLoop(); }
+        
+        document.addEventListener("keydown", e => {
+            if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+            if (e.keyCode === 80) togglePause();
+            if (isPaused || !gameRunning) return;
+            if (e.keyCode === 37 && dx === 0) { dx = -20; dy = 0; }
+            if (e.keyCode === 38 && dy === 0) { dx = 0; dy = -20; }
+            if (e.keyCode === 39 && dx === 0) { dx = 20; dy = 0; }
+            if (e.keyCode === 40 && dy === 0) { dx = 0; dy = 20; }
+        });
+
+        window.onload = () => {
+            document.getElementById("highScoreVal").innerText = localStorage.getItem("snakeHighScore") || 0;
+            document.getElementById("highScoreName").innerText = localStorage.getItem("snakeHighName") || "GHOST";
+        };
+    </script>
+</body>
+</html>

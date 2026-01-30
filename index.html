@@ -287,7 +287,7 @@
 
             // --- START BACKGROUND MUSIC ---
             const music = document.getElementById("bgMusic");
-            music.volume = 0.3; 
+            music.volume = 0.4; 
             music.play().catch(e => console.log("Audio play failed: ", e));
 
             document.getElementById("start-screen").style.display = "none";
@@ -367,9 +367,7 @@
         }
 
         async function handleGameOver() {
-            // STOP MUSIC ON GAME OVER
             document.getElementById("bgMusic").pause();
-            
             gameRunning = false;
             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
             if (totalScore > localHigh) {
@@ -400,7 +398,6 @@
             isPaused = !isPaused; 
             document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; 
             
-            // SYNC MUSIC WITH PAUSE
             const music = document.getElementById("bgMusic");
             isPaused ? music.pause() : music.play();
 
@@ -433,8 +430,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-

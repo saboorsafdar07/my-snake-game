@@ -31,18 +31,6 @@
             text-shadow: 0 0 5px #00f2ff;
         }
 
-        /* Audio Control Buttons */
-        .audio-controls {
-            position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;
-        }
-        .audio-btn {
-            width: 45px; height: 45px; border-radius: 50%; border: 2px solid #00f2ff;
-            background: rgba(0, 242, 255, 0.1); color: #00f2ff; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 20px;
-            transition: 0.3s; outline: none;
-        }
-        .audio-btn.off { border-color: #ff0055; color: #ff0055; opacity: 0.5; }
-
         .main-container {
             position: relative;
             display: flex;
@@ -50,6 +38,7 @@
             justify-content: center;
         }
 
+        /* Toxicity meter hidden on start page */
         .toxic-wrapper {
             position: absolute;
             right: -30px; 
@@ -88,9 +77,7 @@
             background: #ff0055; color: white; border: none;
             padding: 15px 35px; font-weight: bold; font-size: 20px;
             cursor: pointer; text-transform: uppercase; margin: 5px;
-            transition: 0.2s;
         }
-        button:hover { transform: scale(1.05); box-shadow: 0 0 15px #ff0055; }
 
         .whatsapp-btn { background: #25D366; }
 
@@ -109,36 +96,31 @@
 </head>
 <body>
 
-    <div class="audio-controls">
-        <button class="audio-btn" id="musicToggle" onclick="toggleMusic()">🎵</button>
-        <button class="audio-btn" id="sfxToggle" onclick="toggleSFX()">🔊</button>
-    </div>
-
     <div id="start-screen">
         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
         <input type="text" id="playerName" placeholder="Enter Your Name" maxlength="12">
-        <button onclick="uiClick(); attemptStart()">A Quick Start ⚡</button>
-        <button onclick="uiClick(); showLeaderboard()">LEADERBOARD 🏆</button>
+        <button onclick="attemptStart()">A Quick Start ⚡</button>
+        <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
         <div class="credits">Created by Saboor 🍭</div>
     </div>
 
     <div id="leaderboard-screen">
         <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
         <div id="leaderboard-list">Loading players...</div>
-        <button onclick="uiClick(); closeLeaderboard()">CLOSE</button>
+        <button onclick="closeLeaderboard()">CLOSE</button>
     </div>
 
     <div id="game-over-screen">
         <h1 id="over-title">GAME OVER</h1>
         <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
         <h2 id="over-score">SCORE: 0</h2>
-        <button onclick="uiClick(); location.reload()">TRY AGAIN</button>
-        <button class="whatsapp-btn" onclick="uiClick(); shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
+        <button onclick="location.reload()">TRY AGAIN</button>
+        <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
     </div>
 
     <div id="pause-overlay">
         <h1>PAUSED</h1>
-        <button onclick="uiClick(); togglePause()">RESUME (P)</button>
+        <button onclick="togglePause()">RESUME (P)</button>
     </div>
 
     <div class="stats-bar">
@@ -157,71 +139,13 @@
     </div>
 
     <script>
+        // --- DATABASE CONFIG ---
         const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/"; 
+
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- AUDIO ENGINE ---
-        let musicEnabled = true, sfxEnabled = true;
-        let menuMusic, gameMusic;
-
-        function createAudioLoop(notes, baseSpeed) {
-            const a = new (window.AudioContext || window.webkitAudioContext)();
-            const g = a.createGain(); 
-            const b = a.createBiquadFilter(); 
-            b.type = "lowpass"; b.frequency.value = 2500; 
-            g.connect(b); b.connect(a.destination);
-            
-            return {
-                ctx: a, gain: g, filter: b, notes: notes, speed: baseSpeed, index: 0, interval: null, playing: false,
-                play() {
-                    if(this.playing) return; this.playing = true;
-                    if(this.ctx.state === 'suspended') this.ctx.resume();
-                    this.interval = setInterval(() => {
-                        const o = this.ctx.createOscillator();
-                        const env = this.ctx.createGain();
-                        o.type = 'sawtooth';
-                        o.frequency.setValueAtTime(this.notes[this.index], this.ctx.currentTime);
-                        env.gain.setValueAtTime(0.06, this.ctx.currentTime);
-                        env.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
-                        o.connect(env); env.connect(this.gain); o.start(); o.stop(this.ctx.currentTime + 0.3);
-                        this.index = (this.index + 1) % this.notes.length;
-                    }, this.speed);
-                },
-                stop() { clearInterval(this.interval); this.playing = false; }
-            };
-        }
-
-        menuMusic = createAudioLoop([110, 130, 146, 110, 164], 800);
-        gameMusic = createAudioLoop([110, 164, 110, 196, 220, 146], 400);
-
-        function uiClick() { sfx(400, 200, 0.05); }
-        function toggleMusic() {
-            musicEnabled = !musicEnabled;
-            document.getElementById("musicToggle").classList.toggle("off", !musicEnabled);
-            if(!musicEnabled) { menuMusic.stop(); gameMusic.stop(); } 
-            else { if(gameRunning) gameMusic.play(); else menuMusic.play(); }
-        }
-        function toggleSFX() {
-            sfxEnabled = !sfxEnabled;
-            document.getElementById("sfxToggle").classList.toggle("off", !sfxEnabled);
-        }
-        function sfx(f1, f2, d = 0.1) {
-            if(!sfxEnabled) return;
-            const a = new (window.AudioContext || window.webkitAudioContext)();
-            const o = a.createOscillator(); const g = a.createGain();
-            o.frequency.setValueAtTime(f1, a.currentTime);
-            o.frequency.exponentialRampToValueAtTime(f2, a.currentTime + d);
-            g.gain.setValueAtTime(0.1, a.currentTime); g.connect(a.destination);
-            o.connect(g); o.start(); o.stop(a.currentTime + d);
-        }
-
-        function victoryFanfare() {
-            if(!sfxEnabled) return;
-            sfx(523, 1046, 0.2); setTimeout(() => sfx(659, 1318, 0.2), 150); setTimeout(() => sfx(783, 1567, 0.4), 300);
-        }
-
-        // --- FULL ROAST LIBRARIES RESTORED ---
+        // --- FULL ROAST LIBRARIES ---
         const startRoasts = [
             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
@@ -261,55 +185,68 @@
         ];
 
         const missRoasts = [
-            "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "MASHALLAH🙏", "YOU TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.", 
+            "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.", 
             "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!", 
             "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?", 
-            "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.🤡", "CLOSE BUT NO CIGAR!", 
-            "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "LITTLE LOST?!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", 
+            "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!", 
+            "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", 
             "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.", 
             "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.", 
-            "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE.", "KID GAME BTW!"
+            "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
         ];
 
         // --- GAME VARIABLES ---
         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
-        let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false, keyLocked = false;
+        let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
         let foodX, foodY, toxicity = 0, isRage = false;
         let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
         let finalRoastMessage = "";
-        let globalBestScore = 0, globalBestName = "NONE";
+        let globalBestScore = 0;
+        let globalBestName = "NONE";
+
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+        function sfx(f1, f2) {
+            if (!audioCtx || audioCtx.state === 'suspended') return;
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.frequency.setValueAtTime(f1, audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(f2, audioCtx.currentTime + 0.1);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.connect(audioCtx.destination);
+            o.connect(g);
+            o.start(); o.stop(audioCtx.currentTime + 0.1);
+        }
 
         async function fetchGlobalHigh() {
             try {
                 const response = await fetch(DB_URL + "scores.json");
                 const data = await response.json();
                 if (data) {
-                    const sorted = Object.values(data).filter(x => x.name && x.name !== "NONE").sort((a,b) => b.score - a.score);
-                    if (sorted.length > 0) {
-                        const top = sorted[0];
-                        globalBestScore = top.score || 0;
-                        globalBestName = top.name || "NONE";
-                        document.getElementById("highScoreVal").innerText = globalBestScore;
-                        document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
-                    }
+                    const sorted = Object.values(data).sort((a,b) => b.score - a.score);
+                    const top = sorted[0];
+                    globalBestScore = top.score || 0;
+                    globalBestName = top.name || "NONE";
+                    document.getElementById("highScoreVal").innerText = globalBestScore;
+                    document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
                 }
             } catch(e) {}
         }
 
         async function saveScore(name, score) {
-            if (score <= 0 || !name) return;
-            const playerId = name.toLowerCase().trim().replace(/[^a-z0-9]/g, ""); 
+            if (score <= 0) return;
+            const playerId = name.toLowerCase().trim(); 
             try {
                 const check = await fetch(`${DB_URL}scores/${playerId}.json`);
                 const existing = await check.json();
                 if (!existing || score > existing.score) {
-                    if(score > globalBestScore && globalBestScore > 0) victoryFanfare();
                     await fetch(`${DB_URL}scores/${playerId}.json`, {
                         method: 'PUT',
                         body: JSON.stringify({ name: name, score: score, date: new Date().toISOString() })
                     });
                 }
-            } catch(e) {}
+            } catch(e) { console.error("Save Error"); }
         }
 
         async function showLeaderboard() {
@@ -320,7 +257,7 @@
                 const response = await fetch(DB_URL + "scores.json");
                 const data = await response.json();
                 if (data) {
-                    const sorted = Object.values(data).filter(x => x.name).sort((a,b) => b.score - a.score);
+                    const sorted = Object.values(data).sort((a,b) => b.score - a.score);
                     let html = `<div class="lb-header">TOP 5 LEGENDS</div>`;
                     html += sorted.slice(0, 5).map((s, i) => {
                         const crown = (i === 0) ? `<span class="mvp-crown"> 👑 MVP</span>` : '';
@@ -346,9 +283,9 @@
                 return; 
             }
             currentPlayer = nameInput;
-            menuMusic.stop(); if(musicEnabled) gameMusic.play();
+            initAudio();
             document.getElementById("start-screen").style.display = "none";
-            document.getElementById("toxic-ui").style.display = "flex"; 
+            document.getElementById("toxic-ui").style.display = "flex"; // SHOW TOXICITY NOW
             gameRunning = true; 
             createFood(); 
             gameLoop();
@@ -362,17 +299,8 @@
 
         function gameLoop() {
             if (!gameRunning || isPaused) return;
-            keyLocked = false;
             let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
             
-            if(musicEnabled) {
-                gameMusic.stop();
-                gameMusic.speed = Math.max(150, 400 - (totalScore * 2.5));
-                gameMusic.filter.frequency.value = isRage ? 450 : 2500;
-                gameMusic.gain.gain.value = isRage ? 0.15 : 0.06;
-                gameMusic.play();
-            }
-
             setTimeout(() => {
                 ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
                 let nextX = snake[0].x + dx; 
@@ -408,13 +336,13 @@
                 } else { snake.pop(); }
 
                 if (head.x < 0 || head.x >= 800 || head.y < 0 || head.y >= 600 || snake.slice(1).some(p => p.x === head.x && p.y === head.y)) {
-                    sfx(150, 50, 0.4); handleGameOver(); return;
+                    sfx(150, 50); handleGameOver(); return;
                 }
 
                 snake.forEach((p, i) => {
                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
                     ctx.fillRect(p.x, p.y, 18, 18);
-                    if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase() && globalBestScore > 0) {
+                    if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
                         ctx.fillStyle = "gold"; ctx.font = "20px Arial"; ctx.textAlign = "center";
                         ctx.fillText("👑", p.x + 10, p.y - 6);
                     }
@@ -430,7 +358,7 @@
         }
 
         async function handleGameOver() {
-            gameRunning = false; gameMusic.stop();
+            gameRunning = false;
             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
             if (totalScore > localHigh) {
                 finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
@@ -448,7 +376,7 @@
             const gameLink = window.location.href;
             let text = "";
             if (totalScore >= globalBestScore && totalScore > 0) {
-                text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the Record with a score of ${totalScore} in The Snake!\n\nChallenge me: ${gameLink}`;
+                text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the World Record with a score of ${totalScore} in The Snake!\n\nChallenge me: ${gameLink}`;
             } else {
                 text = `🐍 THE SNAKE GAME 🐍\n\nMy Score: ${totalScore}\n\nSystem Roasted Me: "${finalRoastMessage}"\n\nChallenge: ${gameLink}`;
             }
@@ -456,10 +384,10 @@
         }
 
         function togglePause() { 
-            if(!gameRunning) return; 
+            if(!gameRunning) return; // Prevent pausing on start screen
             isPaused = !isPaused; 
             document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none"; 
-            if(isPaused) gameMusic.stop(); else { if(musicEnabled) gameMusic.play(); gameLoop(); }
+            if(!isPaused) gameLoop(); 
         }
 
         async function resetLeaderboard() {
@@ -469,22 +397,26 @@
             }
         }
 
+        // --- THE FIX: Smart Keyboard Listener ---
         document.addEventListener("keydown", e => {
+            // IF TYPING IN NAME BOX, STOP GAME CONTROLS
             if (document.activeElement.tagName === "INPUT") return;
+
             if ([32, 37, 38, 39, 40, 87, 65, 83, 68].includes(e.keyCode)) e.preventDefault();
-            if (e.keyCode === 80 && gameRunning) togglePause();
-            if (isPaused || !gameRunning || keyLocked) return;
             
-            if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { dx = -20; dy = 0; keyLocked = true; sfx(200, 300, 0.02); }
-            else if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { dx = 0; dy = -20; keyLocked = true; sfx(200, 300, 0.02); }
-            else if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { dx = 20; dy = 0; keyLocked = true; sfx(200, 300, 0.02); }
-            else if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { dx = 0; dy = 20; keyLocked = true; sfx(200, 300, 0.02); }
+            // P key for pause (Only if game is active)
+            if (e.keyCode === 80 && gameRunning) togglePause();
+            
+            if (isPaused || !gameRunning) return;
+            
+            // WASD + Arrows Movement
+            if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { dx = -20; dy = 0; }
+            if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { dx = 0; dy = -20; }
+            if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { dx = 20; dy = 0; }
+            if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { dx = 0; dy = 20; }
         });
 
-        window.onload = () => {
-            fetchGlobalHigh();
-            document.body.addEventListener('click', () => { if(!gameRunning && musicEnabled) menuMusic.play(); }, {once: true});
-        };
+        window.onload = fetchGlobalHigh;
     </script>
 </body>
 </html>

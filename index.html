@@ -18,6 +18,13 @@
         }
         #pause-overlay, #leaderboard-screen, #game-over-screen { display: none; }
         
+        /* Fixed size for leaderboard with scrolling */
+        #leaderboard-screen {
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         .credits {
             position: absolute; bottom: 10px; right: 15px;
             font-size: 12px; color: #00f2ff; opacity: 0.7;
@@ -82,6 +89,7 @@
 
         #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
         .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
+        .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
     </style>
 </head>
 <body>
@@ -95,7 +103,7 @@
     </div>
 
     <div id="leaderboard-screen">
-        <h2 style="color:#00f2ff;">GLOBAL TOP 5</h2>
+        <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
         <div id="leaderboard-list">Loading...</div>
         <button onclick="closeLeaderboard()">CLOSE</button>
     </div>
@@ -238,6 +246,16 @@
             } catch(e) {}
         }
 
+        async function resetLeaderboard() {
+            if (confirm("ADMIN DETECTED: NUKE THE LEADERBOARD?")) {
+                try {
+                    await fetch(DB_URL + "scores.json", { method: 'DELETE' });
+                    alert("Leaderboard cleared. You monster.");
+                    location.reload();
+                } catch(e) { alert("Failed to clear."); }
+            }
+        }
+
         async function showLeaderboard() {
             document.getElementById("leaderboard-screen").style.display = "block";
             const list = document.getElementById("leaderboard-list");
@@ -246,8 +264,15 @@
                 const response = await fetch(DB_URL + "scores.json");
                 const data = await response.json();
                 if (data) {
-                    const sorted = Object.values(data).sort((a,b) => b.score - a.score).slice(0, 5);
-                    list.innerHTML = sorted.map((s, i) => `<div class="lb-item"><span>${i+1}. ${s.name || "Anon"}</span><span>${s.score || 0}</span></div>`).join('');
+                    const sorted = Object.values(data).sort((a,b) => b.score - a.score);
+                    
+                    let html = `<div class="lb-header">TOP 5 CHAMPIONS</div>`;
+                    html += sorted.slice(0, 5).map((s, i) => `<div class="lb-item"><span>${i+1}. ${s.name || "Anon"}</span><span>${s.score || 0}</span></div>`).join('');
+                    
+                    html += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
+                    html += sorted.map((s, i) => `<div class="lb-item"><span>${i+1}. ${s.name || "Anon"}</span><span>${s.score || 0}</span></div>`).join('');
+                    
+                    list.innerHTML = html;
                 } else { list.innerHTML = "No records."; }
             } catch(e) { list.innerHTML = "Error."; }
         }
@@ -256,6 +281,10 @@
 
         function attemptStart() {
             const name = document.getElementById("playerName").value.trim();
+            
+            // ADMIN KEY CHECK
+            if (name === "saboor07") { resetLeaderboard(); return; }
+
             if (name.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
             currentPlayer = name;
             initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();

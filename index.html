@@ -75,6 +75,16 @@
              width: 800px; padding: 10px 20px; font-size: 18px;
              background: rgba(0, 242, 255, 0.1); margin-bottom: 10px;
          }
+         /* NEW AUDIO BUTTON STYLES */
+         .audio-controls {
+             position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 101;
+         }
+         .audio-btn {
+             background: rgba(0, 242, 255, 0.2); border: 1px solid #00f2ff;
+             color: #00f2ff; padding: 5px 10px; font-size: 12px; cursor: pointer;
+         }
+         .audio-btn.off { color: #ff0055; border-color: #ff0055; background: rgba(255, 0, 85, 0.1); }
+
          canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
           #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
          .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
@@ -88,6 +98,11 @@
      <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
      
+     <div class="audio-controls">
+         <button class="audio-btn" id="musicToggle" onclick="toggleMusic()">MUSIC: ON</button>
+         <button class="audio-btn" id="sfxToggle" onclick="toggleSFX()">SFX: ON</button>
+     </div>
+
      <div id="start-screen">
          <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
          <input type="text" id="playerName" placeholder="Name" maxlength="12">
@@ -134,6 +149,9 @@
          const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/";
          const canvas = document.getElementById("gameCanvas");
          const ctx = canvas.getContext("2d");
+
+         let musicMuted = false;
+         let sfxMuted = false;
 
          const startRoasts = [
              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
@@ -195,6 +213,22 @@
          let audioCtx;
 
          function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+         function toggleMusic() {
+             musicMuted = !musicMuted;
+             const music = document.getElementById("bgMusic");
+             const btn = document.getElementById("musicToggle");
+             music.muted = musicMuted;
+             btn.innerText = musicMuted ? "MUSIC: OFF" : "MUSIC: ON";
+             btn.classList.toggle("off", musicMuted);
+         }
+
+         function toggleSFX() {
+             sfxMuted = !sfxMuted;
+             const btn = document.getElementById("sfxToggle");
+             btn.innerText = sfxMuted ? "SFX: OFF" : "SFX: ON";
+             btn.classList.toggle("off", sfxMuted);
+         }
 
          async function fetchGlobalHigh() {
              try {
@@ -263,7 +297,7 @@
              initAudio();
              
              const music = document.getElementById("bgMusic");
-             music.volume = 0.1;
+             music.volume = 0.15;
              music.play().catch(e => console.log("Audio play failed: ", e));
              
              document.getElementById("start-screen").style.display = "none";
@@ -315,10 +349,12 @@
                      toxicity = Math.max(0, toxicity - 40);
                      missCombo = 0;
 
-                     // REWIND AND PLAY EAT SOUND
-                     const eatSfx = document.getElementById("eatSound");
-                     eatSfx.currentTime = 0;
-                     eatSfx.play();
+                     // SFX Logic
+                     if(!sfxMuted) {
+                        const eatSfx = document.getElementById("eatSound");
+                        eatSfx.currentTime = 0;
+                        eatSfx.play();
+                     }
 
                      document.getElementById("scoreVal").innerText = totalScore;
                      fetchGlobalHigh();
@@ -348,11 +384,14 @@
          }
 
          async function handleGameOver() {
-             // STOP MUSIC AND PLAY DEATH SOUND
              document.getElementById("bgMusic").pause();
-             const deathSfx = document.getElementById("deathSound");
-             deathSfx.currentTime = 0;
-             deathSfx.play();
+             
+             // SFX Logic
+             if(!sfxMuted) {
+                const deathSfx = document.getElementById("deathSound");
+                deathSfx.currentTime = 0;
+                deathSfx.play();
+             }
 
              gameRunning = false;
              const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
@@ -384,7 +423,9 @@
               isPaused = !isPaused;
               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
               const music = document.getElementById("bgMusic");
-              isPaused ? music.pause() : music.play();
+              if (!musicMuted) {
+                isPaused ? music.pause() : music.play();
+              }
               if(!isPaused) gameLoop();
          }
 
@@ -410,5 +451,3 @@
      </script>
 </body>
 </html>
-
-

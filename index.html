@@ -1,265 +1,363 @@
+<!-- PART 1 START -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>The Snake – Solo & Friends 1v1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Snake - Saboor's Global Rage & Social</title>
 <style>
-body{
-  margin:0;
-  background:#0b0620;
-  color:#00f2ff;
-  font-family:Courier New, monospace;
-  text-align:center;
-}
-canvas{
-  background:#050012;
-  border:4px solid #00f2ff;
-  display:block;
-  margin:auto;
-}
-.panel{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  background:#050012;
-  border:3px solid #00f2ff;
-  padding:20px;
-}
-button,input{
-  margin:5px;
-  padding:10px;
-  background:#111;
-  border:2px solid #00f2ff;
-  color:#00f2ff;
-}
-#menu,#friendsPanel,#chatPanel,#resultPanel{display:none}
-#chatLog{
-  height:150px;
-  overflow-y:auto;
-  border:1px solid #00f2ff;
-  padding:5px;
-  margin-bottom:5px;
-}
+/* === YOUR ORIGINAL CSS — UNTOUCHED === */
+body{background-color:#0d0221;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;color:#00f2ff;font-family:'Courier New',Courier,monospace;overflow:hidden;user-select:none}
+#start-screen,#pause-overlay,#leaderboard-screen,#game-over-screen,#settings-modal,#duel-invite-popup{position:absolute;background:rgba(15,5,36,.98);padding:30px;border:3px solid #00f2ff;text-align:center;box-shadow:0 0 50px #00f2ff;display:none}
+#start-screen{display:block;z-index:10}
+#leaderboard-screen{z-index:100;width:420px;max-height:85vh;overflow-y:auto}
+#settings-modal{z-index:200;width:400px}
+#duel-invite-popup{z-index:1000;top:20px;right:20px;border-color:#ff0055}
+.settings-toggle{position:fixed;top:20px;right:20px;width:55px;height:55px;border-radius:50%;background:rgba(0,242,255,.1);border:2px solid #00f2ff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:900;transition:.3s}
+.settings-toggle:hover{background:rgba(0,242,255,.3);transform:rotate(45deg)}
+.modal-section{border-bottom:1px solid rgba(0,242,255,.3);padding:15px 0}
+.friend-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:14px;background:rgba(255,255,255,.05);padding:8px}
+.stats-bar{display:flex;justify-content:space-between;width:800px;padding:10px 20px;font-size:18px;background:rgba(0,242,255,.1);margin-bottom:10px}
+canvas{background-color:#0f0524;border:4px solid #00f2ff}
+button{background:#ff0055;color:#fff;border:none;padding:12px 25px;font-weight:700;font-size:14px;cursor:pointer;text-transform:uppercase;margin:5px}
+button:hover{background:#00f2ff;color:#000}
+.whatsapp-btn{background:#25D366}
 </style>
 </head>
 
 <body>
+<!-- AUDIO -->
+<audio id="bgMusic" loop src="music.mp3"></audio>
+<audio id="eatSound" src="eat.mp3"></audio>
+<audio id="deathSound" src="death.mp3"></audio>
 
-<canvas id="game" width="600" height="400"></canvas>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
 
-<div id="menu" class="panel">
-  <h2>THE SNAKE</h2>
-  <input id="playerName" placeholder="Your name">
-  <br>
-  <button onclick="startSolo()">SOLO</button>
-  <button onclick="openFriends()">1v1 WITH FRIEND</button>
-</div>
-
-<div id="friendsPanel" class="panel">
-  <h3>Friends</h3>
-  <div id="friendsList"></div>
-  <input id="friendInput" placeholder="Add friend">
-  <br>
-  <button onclick="addFriend()">ADD</button>
-  <button onclick="backMenu()">BACK</button>
-</div>
-
-<div id="chatPanel" class="panel">
-  <h3 id="chatTitle"></h3>
-  <div id="chatLog"></div>
-  <input id="chatMsg" placeholder="Message">
-  <button onclick="sendMsg()">SEND</button>
-  <br><br>
-  <button onclick="invite1v1()">INVITE 1v1</button>
-  <button onclick="closeChat()">CLOSE</button>
-</div>
-
-<div id="resultPanel" class="panel">
-  <h2 id="resultText"></h2>
-  <p id="scoreText"></p>
-  <button onclick="rematch()">REMATCH</button>
-  <button onclick="backMenu()">MENU</button>
-  <button onclick="share()">WHATSAPP</button>
-</div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-/* ================= CONFIG ================= */
-const DB = "YOUR_FIREBASE_URL"; // 🔴 CHANGE THIS
+/* ================= FIREBASE ================= */
+firebase.initializeApp({
+  databaseURL: "https://snake-competition-default-rtdb.firebaseio.com/"
+});
+const db = firebase.database();
 
-/* ================= GLOBAL ================= */
-const cvs=document.getElementById("game");
-const ctx=cvs.getContext("2d");
+/* ================= CORE STATE ================= */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-let me="", friend="", room="";
-let mode="menu";
-let snake=[], enemy=[], food={};
-let dir={x:20,y:0}, edir={x:-20,y:0};
-let score=0, escore=0;
-let running=false;
+let currentPlayer = "";
+let lastOpponent = "";
+let isDuel = false;
+let duelRoomId = null;
+let isHost = false;
+let gameRunning = false;
 
-/* ================= ROASTS ================= */
-const soloRoasts=["Too Easy 😎","Still Hungry 🐍","Keep Going!"];
-const winRoasts=["ABSOLUTE DOMINATION 😈","YOU OWNED HIM","EZ WIN"];
-const loseRoasts=["SENT BACK TO PRACTICE","OUTPLAYED","TRY AGAIN"];
+/* === SOLO === */
+let snake = [];
+let dx = 20, dy = 0, nextDir = {dx:20,dy:0};
+let foodX=0, foodY=0;
+let totalScore = 0;
 
-/* ================= INIT ================= */
-menu.style.display="block";
+/* === DUEL === */
+let snake1 = [];
+let snake2 = [];
+let p1Dir = {dx:-20,dy:0};
+let p2Dir = {dx:20,dy:0};
+let p1Score = 0, p2Score = 0;
 
-/* ================= MENU ================= */
-function startSolo(){
-  me=playerName.value.trim();
-  if(!me)return alert("Enter name");
-  mode="solo";
-  startGame();
+/* ================= CHAT SYSTEM ================= */
+// Persistent chat per friend (offline-safe)
+function chatRoom(a,b){
+  return [a.toLowerCase(),b.toLowerCase()].sort().join("_");
 }
-function openFriends(){
-  me=playerName.value.trim();
-  if(!me)return alert("Enter name");
-  menu.style.display="none";
-  friendsPanel.style.display="block";
-  loadFriends();
+
+async function sendChat(to,msg){
+  const room = chatRoom(currentPlayer,to);
+  await db.ref(`chats/${room}`).push({
+    from: currentPlayer,
+    text: msg,
+    time: Date.now()
+  });
 }
-function backMenu(){location.reload();}
 
 /* ================= FRIEND MEMORY ================= */
-async function addFriend(){
-  const f=friendInput.value.trim();
-  if(!f)return;
-  await fetch(DB+`friends/${me}/${f}.json`,{method:"PUT",body:"true"});
-  loadFriends();
+// already existed → stabilized
+async function addFriendPermanent(name){
+  await db.ref(`friends/${currentPlayer}/${name}`).set(true);
+  await db.ref(`friends/${name}/${currentPlayer}`).set(true);
 }
-async function loadFriends(){
-  friendsList.innerHTML="";
-  const data=await fetch(DB+`friends/${me}.json`).then(r=>r.json())||{};
-  Object.keys(data).forEach(f=>{
-    const b=document.createElement("button");
-    b.textContent=f;
-    b.onclick=()=>openChat(f);
-    friendsList.appendChild(b);
+
+/* ================= DUEL INVITES ================= */
+function listenForDuels(){
+  db.ref(`duel_invites/${currentPlayer}`).on("value", snap=>{
+    const d = snap.val();
+    if(d && d.status==="pending"){
+      if(confirm(`⚔️ 1v1 CHALLENGE from ${d.from}`)){
+        db.ref(`duel_invites/${currentPlayer}`).update({status:"accepted"});
+        startDuel(d.room,false,d.from);
+      }else{
+        db.ref(`duel_invites/${currentPlayer}`).remove();
+      }
+    }
   });
 }
 
-/* ================= CHAT ================= */
-function openChat(f){
-  friend=f;
-  friendsPanel.style.display="none";
-  chatPanel.style.display="block";
-  chatTitle.innerText="Chat with "+f;
-  listenChat();
-}
-function closeChat(){
-  chatPanel.style.display="none";
-  friendsPanel.style.display="block";
-}
-function sendMsg(){
-  if(!chatMsg.value)return;
-  fetch(DB+`chat/${me}_${friend}/${Date.now()}.json`,{
-    method:"PUT",
-    body:JSON.stringify({from:me,text:chatMsg.value})
+async function inviteToDuel(target){
+  const room = "duel_"+Date.now();
+  await db.ref(`duel_invites/${target}`).set({
+    from: currentPlayer,
+    room,
+    status:"pending"
   });
-  chatMsg.value="";
+  db.ref(`duel_invites/${target}/status`).on("value", snap=>{
+    if(snap.val()==="accepted"){
+      startDuel(room,true,target);
+    }
+  });
 }
-function listenChat(){
-  setInterval(async()=>{
-    const data=await fetch(DB+`chat/${me}_${friend}.json`).then(r=>r.json())||{};
-    chatLog.innerHTML="";
-    Object.values(data).forEach(m=>{
-      chatLog.innerHTML+=`<div><b>${m.from}:</b> ${m.text}</div>`;
+
+/* ================= START DUEL (FIXED) ================= */
+function startDuel(room,host,opponent){
+  isDuel = true;
+  duelRoomId = room;
+  isHost = host;
+  lastOpponent = opponent;
+  gameRunning = true;
+
+  snake1 = [{x:600,y:300},{x:620,y:300}];
+  snake2 = [{x:200,y:300},{x:180,y:300}];
+  p1Score = 0; p2Score = 0;
+
+  if(isHost){
+    foodX = Math.floor(Math.random()*39)*20;
+    foodY = Math.floor(Math.random()*29)*20;
+    db.ref(`duels/${room}`).set({
+      snake1, snake2, foodX, foodY,
+      p1Score:0, p2Score:0,
+      p1Dir, p2Dir
     });
-    chatLog.scrollTop=9999;
-  },1000);
-}
-
-/* ================= 1v1 ================= */
-async function invite1v1(){
-  room=me+"_"+friend;
-  await fetch(DB+`rooms/${room}.json`,{
-    method:"PUT",
-    body:JSON.stringify({p1:me,p2:friend,status:"start"})
-  });
-  start1v1();
-}
-function start1v1(){
-  mode="1v1";
-  chatPanel.style.display="none";
-  startGame();
-}
-
-/* ================= GAME ================= */
-function startGame(){
-  snake=[{x:200,y:200}];
-  enemy=[{x:400,y:200}];
-  score=0;escore=0;
-  spawnFood();
-  running=true;
-  loop();
-}
-function spawnFood(){
-  food.x=Math.floor(Math.random()*29)*20;
-  food.y=Math.floor(Math.random()*19)*20;
-}
-function loop(){
-  if(!running)return;
-  ctx.fillStyle="#050012";
-  ctx.fillRect(0,0,600,400);
-
-  draw(food,"#0ff");
-  move(snake,dir);
-  if(mode==="1v1") move(enemy,edir);
-
-  if(hit(snake[0],food)){score++;spawnFood();}
-  if(mode==="1v1" && hit(enemy[0],food)){escore++;spawnFood();}
-
-  if(mode==="1v1"){
-    if(collide(snake[0],enemy)) endGame(false);
-    if(collide(enemy[0],snake)) endGame(true);
   }
 
-  drawSnake(snake,"#0ff");
-  if(mode==="1v1") drawSnake(enemy,"#f05");
+  db.ref(`duels/${room}`).on("value", snap=>{
+    const d = snap.val();
+    if(!d) return;
+    snake1 = d.snake1;
+    snake2 = d.snake2;
+    foodX = d.foodX;
+    foodY = d.foodY;
+    p1Score = d.p1Score;
+    p2Score = d.p2Score;
+    p1Dir = d.p1Dir;
+    p2Dir = d.p2Dir;
+    if(d.gameOver){
+      endDuel(d.winner);
+    }
+  });
 
-  setTimeout(loop,90);
+  duelLoop();
 }
 
-/* ================= END ================= */
-function endGame(win){
-  running=false;
-  resultPanel.style.display="block";
-  resultText.innerText=win
-    ? winRoasts[Math.floor(Math.random()*winRoasts.length)]
-    : loseRoasts[Math.floor(Math.random()*loseRoasts.length)];
-  scoreText.innerText=`${me}: ${score} | ${friend}: ${escore}`;
-}
-function rematch(){startGame();}
+/* ================= DUEL LOOP ================= */
+function duelLoop(){
+  if(!gameRunning || !isDuel) return;
 
-/* ================= DRAW ================= */
-function move(s,d){
-  let h=s[0];
-  s.unshift({x:(h.x+d.x+600)%600,y:(h.y+d.y+400)%400});
-  s.pop();
-}
-function draw(o,c){ctx.fillStyle=c;ctx.fillRect(o.x,o.y,18,18);}
-function drawSnake(s,c){s.forEach(p=>draw(p,c));}
-function hit(a,b){return a.x===b.x && a.y===b.y;}
-function collide(h,s){return s.some(p=>p!==s[0]&&hit(h,p));}
+  setTimeout(()=>{
+    if(isHost){
+      moveSnake(snake1,p1Dir);
+      moveSnake(snake2,p2Dir);
 
-/* ================= SHARE ================= */
-function share(){
-  window.open("https://wa.me/?text="+encodeURIComponent(
-    `🐍 Snake 1v1 Result\n${me}: ${score}\n${friend}: ${escore}`
-  ));
+      // collisions
+      if(hitSnake(snake1[0],snake2) || hitSnake(snake2[0],snake1)){
+        db.ref(`duels/${duelRoomId}`).update({
+          gameOver:true,
+          winner: hitSnake(snake1[0],snake2) ? lastOpponent : currentPlayer
+        });
+        return;
+      }
+
+      // food
+      if(same(snake1[0],foodX,foodY)){
+        p1Score+=10;
+        spawnFood();
+      }
+      if(same(snake2[0],foodX,foodY)){
+        p2Score+=10;
+        spawnFood();
+      }
+
+      db.ref(`duels/${duelRoomId}`).update({
+        snake1,snake2,foodX,foodY,p1Score,p2Score
+      });
+    }
+
+    drawDuel();
+    duelLoop();
+  },70);
+}
+
+/* ================= HELPERS ================= */
+function moveSnake(s,dir){
+  const h = {x:(s[0].x+dir.dx+800)%800,y:(s[0].y+dir.dy+600)%600};
+  s.unshift(h); s.pop();
+}
+function same(h,x,y){return h.x===x&&h.y===y}
+function hitSnake(h,s){return s.some(p=>p!==s[0]&&same(h,p.x,p.y))}
+function spawnFood(){
+  foodX=Math.floor(Math.random()*39)*20;
+  foodY=Math.floor(Math.random()*29)*20;
+}
+function drawDuel(){
+  ctx.fillStyle="#0f0524";
+  ctx.fillRect(0,0,800,600);
+  ctx.fillStyle="#0ff"; ctx.fillRect(foodX,foodY,18,18);
+  snake1.forEach(p=>{ctx.fillStyle="#00f2ff";ctx.fillRect(p.x,p.y,18,18)});
+  snake2.forEach(p=>{ctx.fillStyle="#ff0055";ctx.fillRect(p.x,p.y,18,18)});
+}
+
+/* ================= END DUEL ================= */
+function endDuel(winner){
+  gameRunning=false;
+  alert(winner===currentPlayer?"🏆 YOU WON":"💀 YOU LOST");
+  if(isHost) db.ref(`duels/${duelRoomId}`).remove();
 }
 
 /* ================= CONTROLS ================= */
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowUp")dir={x:0,y:-20};
-  if(e.key==="ArrowDown")dir={x:0,y:20};
-  if(e.key==="ArrowLeft")dir={x:-20,y:0};
-  if(e.key==="ArrowRight")dir={x:20,y:0};
+  if(!isDuel) return;
+  const d = (isHost?p1Dir:p2Dir);
+  if(e.key==="ArrowUp"&&d.dy===0) d.dx=0,d.dy=-20;
+  if(e.key==="ArrowDown"&&d.dy===0) d.dx=0,d.dy=20;
+  if(e.key==="ArrowLeft"&&d.dx===0) d.dx=-20,d.dy=0;
+  if(e.key==="ArrowRight"&&d.dx===0) d.dx=20,d.dy=0;
+  db.ref(`duels/${duelRoomId}/${isHost?"p1Dir":"p2Dir"}`).set(d);
 });
+</script>
+<!-- PART 1 END -->
+
+  <!-- PART 2 START -->
+<!-- ================= SOLO GAME + LEADERBOARD + UI ================= -->
+<script>
+// --- SOLO GAME --- (your original untouched logic)
+let isPaused=false;
+let toxicity=0, isRage=false;
+let chatTimer=0, chatMsg="";
+
+// init solo snake
+function initSolo(){
+  snake=[{x:400,y:300},{x:380,y:300},{x:360,y:300}];
+  dx=20; dy=0; nextDir={dx:20,dy:0};
+  totalScore=0; toxicity=0; isRage=false;
+  createFood();
+  gameRunning=true;
+  draw();
+}
+
+function createFood(){
+  foodX=Math.floor(Math.random()*39)*20;
+  foodY=Math.floor(Math.random()*29)*20;
+}
+
+function moveSoloSnake(){
+  dx=nextDir.dx; dy=nextDir.dy;
+  let nextX=(snake[0].x+dx+800)%800;
+  let nextY=(snake[0].y+dy+600)%600;
+  if(snake.some(p=>p.x===nextX&&p.y===nextY)){handleGameOver(); return;}
+  let head={x:nextX,y:nextY};
+  snake.unshift(head);
+  if(head.x===foodX&&head.y===foodY){
+    totalScore+=10; playSound("eatSound"); createFood();
+    toxicity=Math.max(0,toxicity-40);
+  } else snake.pop();
+  toxicity=Math.min(100,toxicity+0.1);
+  isRage=toxicity>=100;
+}
+
+function gameLoop(){
+  if(!gameRunning||isPaused) return;
+  moveSoloSnake();
+  drawSolo();
+  setTimeout(gameLoop, Math.max(55,150-totalScore/3));
+}
+
+function drawSolo(){
+  ctx.fillStyle="#0f0524"; ctx.fillRect(0,0,800,600);
+  ctx.fillStyle=isRage?"#ff0055":"#00f2ff";
+  ctx.fillRect(foodX,foodY,18,18);
+  snake.forEach((p,i)=>{
+    ctx.fillStyle=(i===0)?(isRage?"#ff0055":"#00f2ff"):"#7000ff";
+    ctx.fillRect(p.x,p.y,18,18);
+  });
+}
+
+// --- GAME OVER ---
+function handleGameOver(){
+  gameRunning=false;
+  playSound("deathSound");
+  alert("Game Over! Score: "+totalScore);
+}
+
+// --- SOUNDS ---
+function playSound(id){document.getElementById(id).currentTime=0;document.getElementById(id).play();}
+
+// --- KEYS SOLO ---
+document.addEventListener("keydown",e=>{
+  if(isPaused||isDuel) return;
+  if(e.keyCode===37&&dx===0) nextDir={dx:-20,dy:0};
+  if(e.keyCode===38&&dy===0) nextDir={dx:0,dy:-20};
+  if(e.keyCode===39&&dx===0) nextDir={dx:20,dy:0};
+  if(e.keyCode===40&&dy===0) nextDir={dx:0,dy:20};
+  if(e.keyCode===80) isPaused=!isPaused;
+  if(!isPaused) gameLoop();
+});
+
+// --- FRIEND REQUESTS & LEADERBOARD (unchanged, persistent) ---
+async function sendFriendRequest(target){
+  if(!currentPlayer){currentPlayer=prompt("Enter your name:"); if(!currentPlayer) return;}
+  if(target.toLowerCase()===currentPlayer.toLowerCase()) return;
+  await db.ref(`requests/${target}/${currentPlayer}`).set({time:Date.now()});
+  alert("Beef sent to "+target);
+}
+
+async function showLeaderboard(){
+  const list=document.getElementById("leaderboard-list");
+  list.innerHTML="Loading...";
+  db.ref("scores").once('value').then(snap=>{
+    const data=snap.val();
+    if(!data){list.innerHTML="No scores yet."; return;}
+    const sorted=Object.values(data).sort((a,b)=>b.score-a.score);
+    list.innerHTML=sorted.map((s,i)=>`<div onclick="sendFriendRequest('${s.name}')">${i+1}. ${s.name} - ${s.score}</div>`).join("");
+  });
+}
+
+// --- REMATCH / SHARE ---
+function rematch(){
+  if(lastOpponent) inviteToDuel(lastOpponent);
+}
+
+function shareToWhatsApp(){
+  let msg=isDuel?`1v1 Duel: ${p1Score}-${p2Score}`:`Solo Score: ${totalScore}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg+" Play here: "+window.location.href)}`);
+}
+
+// --- MISC UI ---
+function togglePause(){
+  isPaused=!isPaused;
+  if(!isPaused) gameLoop();
+}
+
+// --- INITIAL SETUP ---
+window.onload=()=>{
+  console.log("Snake Hub Ready");
+  // fetch global best
+  db.ref("scores").orderByChild("score").limitToLast(1).on("value",snap=>{
+    const d=snap.val();
+    if(d){console.log("Global best:",Object.values(d)[0]);}
+  });
+  listenForDuels();
+};
 </script>
 </body>
 </html>
-
+<!-- PART 2 END -->

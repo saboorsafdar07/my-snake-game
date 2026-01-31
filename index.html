@@ -75,15 +75,21 @@
              width: 800px; padding: 10px 20px; font-size: 18px;
              background: rgba(0, 242, 255, 0.1); margin-bottom: 10px;
          }
-         /* NEW AUDIO BUTTON STYLES */
-         .audio-controls {
-             position: absolute; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 101;
+
+         /* AUDIO CONTROLS - FIXED PERSISTENT POSITION */
+         .audio-settings {
+             position: fixed; top: 20px; right: 20px;
+             display: flex; gap: 10px; z-index: 1000;
          }
          .audio-btn {
-             background: rgba(0, 242, 255, 0.2); border: 1px solid #00f2ff;
-             color: #00f2ff; padding: 5px 10px; font-size: 12px; cursor: pointer;
+             background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff;
+             color: #00f2ff; padding: 8px 15px; font-size: 12px;
+             cursor: pointer; font-family: 'Courier New', monospace;
+             transition: all 0.2s;
          }
-         .audio-btn.off { color: #ff0055; border-color: #ff0055; background: rgba(255, 0, 85, 0.1); }
+         .audio-btn.muted {
+             border-color: #ff0055; color: #ff0055; background: rgba(255, 0, 85, 0.1);
+         }
 
          canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
           #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
@@ -98,9 +104,9 @@
      <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
      
-     <div class="audio-controls">
-         <button class="audio-btn" id="musicToggle" onclick="toggleMusic()">MUSIC: ON</button>
-         <button class="audio-btn" id="sfxToggle" onclick="toggleSFX()">SFX: ON</button>
+     <div class="audio-settings">
+         <button id="musicBtn" class="audio-btn" onclick="toggleMusic()">MUSIC: ON</button>
+         <button id="sfxBtn" class="audio-btn" onclick="toggleSFX()">SFX: ON</button>
      </div>
 
      <div id="start-screen">
@@ -150,8 +156,8 @@
          const canvas = document.getElementById("gameCanvas");
          const ctx = canvas.getContext("2d");
 
-         let musicMuted = false;
-         let sfxMuted = false;
+         let musicEnabled = true;
+         let sfxEnabled = true;
 
          const startRoasts = [
              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
@@ -215,19 +221,30 @@
          function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
          function toggleMusic() {
-             musicMuted = !musicMuted;
+             musicEnabled = !musicEnabled;
              const music = document.getElementById("bgMusic");
-             const btn = document.getElementById("musicToggle");
-             music.muted = musicMuted;
-             btn.innerText = musicMuted ? "MUSIC: OFF" : "MUSIC: ON";
-             btn.classList.toggle("off", musicMuted);
+             const btn = document.getElementById("musicBtn");
+             if (musicEnabled) {
+                 btn.innerText = "MUSIC: ON";
+                 btn.classList.remove("muted");
+                 if (gameRunning && !isPaused) music.play();
+             } else {
+                 btn.innerText = "MUSIC: OFF";
+                 btn.classList.add("muted");
+                 music.pause();
+             }
          }
 
          function toggleSFX() {
-             sfxMuted = !sfxMuted;
-             const btn = document.getElementById("sfxToggle");
-             btn.innerText = sfxMuted ? "SFX: OFF" : "SFX: ON";
-             btn.classList.toggle("off", sfxMuted);
+             sfxEnabled = !sfxEnabled;
+             const btn = document.getElementById("sfxBtn");
+             if (sfxEnabled) {
+                 btn.innerText = "SFX: ON";
+                 btn.classList.remove("muted");
+             } else {
+                 btn.innerText = "SFX: OFF";
+                 btn.classList.add("muted");
+             }
          }
 
          async function fetchGlobalHigh() {
@@ -298,7 +315,7 @@
              
              const music = document.getElementById("bgMusic");
              music.volume = 0.15;
-             music.play().catch(e => console.log("Audio play failed: ", e));
+             if (musicEnabled) music.play().catch(e => console.log("Audio play failed: ", e));
              
              document.getElementById("start-screen").style.display = "none";
              document.getElementById("toxic-ui").style.display = "flex";
@@ -349,8 +366,8 @@
                      toxicity = Math.max(0, toxicity - 40);
                      missCombo = 0;
 
-                     // SFX Logic
-                     if(!sfxMuted) {
+                     // Eat SFX
+                     if (sfxEnabled) {
                         const eatSfx = document.getElementById("eatSound");
                         eatSfx.currentTime = 0;
                         eatSfx.play();
@@ -386,8 +403,8 @@
          async function handleGameOver() {
              document.getElementById("bgMusic").pause();
              
-             // SFX Logic
-             if(!sfxMuted) {
+             // Death SFX
+             if (sfxEnabled) {
                 const deathSfx = document.getElementById("deathSound");
                 deathSfx.currentTime = 0;
                 deathSfx.play();
@@ -423,7 +440,7 @@
               isPaused = !isPaused;
               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
               const music = document.getElementById("bgMusic");
-              if (!musicMuted) {
+              if (musicEnabled) {
                 isPaused ? music.pause() : music.play();
               }
               if(!isPaused) gameLoop();

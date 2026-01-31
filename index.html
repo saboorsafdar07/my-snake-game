@@ -76,20 +76,22 @@
              background: rgba(0, 242, 255, 0.1); margin-bottom: 10px;
          }
 
-         /* AUDIO CONTROLS - FIXED PERSISTENT POSITION */
+         /* CIRCULAR AUDIO CONTROLS */
          .audio-settings {
              position: fixed; top: 20px; right: 20px;
-             display: flex; gap: 10px; z-index: 1000;
+             display: flex; flex-direction: column; gap: 15px; z-index: 1000;
          }
-         .audio-btn {
-             background: rgba(0, 242, 255, 0.1); border: 1px solid #00f2ff;
-             color: #00f2ff; padding: 8px 15px; font-size: 12px;
-             cursor: pointer; font-family: 'Courier New', monospace;
-             transition: all 0.2s;
+         .circle-btn {
+             width: 50px; height: 50px; border-radius: 50%;
+             background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff;
+             display: flex; align-items: center; justify-content: center;
+             cursor: pointer; transition: all 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
          }
-         .audio-btn.muted {
-             border-color: #ff0055; color: #ff0055; background: rgba(255, 0, 85, 0.1);
+         .circle-btn svg { width: 24px; height: 24px; fill: #00f2ff; }
+         .circle-btn.muted {
+             border-color: #ff0055; background: rgba(255, 0, 85, 0.1);
          }
+         .circle-btn.muted svg { fill: #ff0055; }
 
          canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
           #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
@@ -105,8 +107,12 @@
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
      
      <div class="audio-settings">
-         <button id="musicBtn" class="audio-btn" onclick="toggleMusic()">MUSIC: ON</button>
-         <button id="sfxBtn" class="audio-btn" onclick="toggleSFX()">SFX: ON</button>
+         <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
+            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+         </div>
+         <div id="sfxBtn" class="circle-btn" onclick="toggleSFX()">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+         </div>
      </div>
 
      <div id="start-screen">
@@ -225,11 +231,9 @@
              const music = document.getElementById("bgMusic");
              const btn = document.getElementById("musicBtn");
              if (musicEnabled) {
-                 btn.innerText = "MUSIC: ON";
                  btn.classList.remove("muted");
                  if (gameRunning && !isPaused) music.play();
              } else {
-                 btn.innerText = "MUSIC: OFF";
                  btn.classList.add("muted");
                  music.pause();
              }
@@ -238,13 +242,7 @@
          function toggleSFX() {
              sfxEnabled = !sfxEnabled;
              const btn = document.getElementById("sfxBtn");
-             if (sfxEnabled) {
-                 btn.innerText = "SFX: ON";
-                 btn.classList.remove("muted");
-             } else {
-                 btn.innerText = "SFX: OFF";
-                 btn.classList.add("muted");
-             }
+             sfxEnabled ? btn.classList.remove("muted") : btn.classList.add("muted");
          }
 
          async function fetchGlobalHigh() {
@@ -338,8 +336,17 @@
                  dx = nextDirection.dx;
                  dy = nextDirection.dy;
                  ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
+                 
+                 // WALL WRAPPING LOGIC
                  let nextX = snake[0].x + dx;
                  let nextY = snake[0].y + dy;
+
+                 if (nextX < 0) nextX = 800 - 20;
+                 else if (nextX >= 800) nextX = 0;
+                 
+                 if (nextY < 0) nextY = 600 - 20;
+                 else if (nextY >= 600) nextY = 0;
+
                  let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
 
                  if (dist < 35 && (nextX !== foodX || nextY !== foodY)) wasNear = true;
@@ -359,6 +366,12 @@
                  ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
                  const head = { x: nextX, y: nextY };
+                 
+                 // Collision with body still kills you
+                 if (snake.some(p => p.x === head.x && p.y === head.y)) {
+                     handleGameOver(); return;
+                 }
+
                  snake.unshift(head);
 
                  if (head.x === foodX && head.y === foodY) {
@@ -366,7 +379,6 @@
                      toxicity = Math.max(0, toxicity - 40);
                      missCombo = 0;
 
-                     // Eat SFX
                      if (sfxEnabled) {
                         const eatSfx = document.getElementById("eatSound");
                         eatSfx.currentTime = 0;
@@ -377,10 +389,6 @@
                      fetchGlobalHigh();
                      createFood();
                  } else { snake.pop(); }
-
-                 if (head.x < 0 || head.x >= 800 || head.y < 0 || head.y >= 600 || snake.slice(1).some(p => p.x === head.x && p.y === head.y)) {
-                     handleGameOver(); return;
-                 }
 
                  snake.forEach((p, i) => {
                      ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
@@ -403,7 +411,6 @@
          async function handleGameOver() {
              document.getElementById("bgMusic").pause();
              
-             // Death SFX
              if (sfxEnabled) {
                 const deathSfx = document.getElementById("deathSound");
                 deathSfx.currentTime = 0;

@@ -105,7 +105,7 @@
      <audio id="bgMusic" loop src="music.mp3"></audio>
      <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
-     <audio id="rageSound" src="rage.mp3" preload="auto"></audio>
+     <audio id="rageSound" loop src="rage.mp3" preload="auto"></audio>
      
      <div class="audio-settings">
          <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
@@ -234,7 +234,7 @@
              const btn = document.getElementById("musicBtn");
              if (musicEnabled) {
                  btn.classList.remove("muted");
-                 if (gameRunning && !isPaused) music.play();
+                 if (gameRunning && !isPaused && !isRage) music.play();
              } else {
                  btn.classList.add("muted");
                  music.pause();
@@ -365,15 +365,21 @@
                  isRage = toxicity >= 100;
 
                  const rageSfx = document.getElementById("rageSound");
+                 const mainMusic = document.getElementById("bgMusic");
+
                  if (isRage && sfxEnabled) {
                      if (!isRageSoundPlaying) {
+                         mainMusic.pause();
                          rageSfx.currentTime = 0;
                          rageSfx.play();
                          isRageSoundPlaying = true;
                      }
                  } else {
-                     rageSfx.pause();
-                     isRageSoundPlaying = false;
+                     if (isRageSoundPlaying) {
+                         rageSfx.pause();
+                         isRageSoundPlaying = false;
+                         if (musicEnabled && !isPaused) mainMusic.play();
+                     }
                  }
 
                  document.getElementById("toxic-bar").style.height = toxicity + "%";
@@ -465,13 +471,16 @@
               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
               const music = document.getElementById("bgMusic");
               const rageSfx = document.getElementById("rageSound");
-              if (musicEnabled) {
-                isPaused ? music.pause() : music.play();
-              }
+
               if (isPaused) {
-                  rageSfx.pause();
-              } else if (isRage && sfxEnabled) {
-                  rageSfx.play();
+                music.pause();
+                rageSfx.pause();
+              } else {
+                if (isRage && sfxEnabled) {
+                    rageSfx.play();
+                } else if (musicEnabled) {
+                    music.play();
+                }
               }
               if(!isPaused) gameLoop();
          }

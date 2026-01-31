@@ -224,6 +224,7 @@
          let globalBestName = "NONE";
          let nextDirection = { dx: 20, dy: 0 };
          let audioCtx;
+         let isRageSoundPlaying = false;
 
          function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
@@ -362,6 +363,19 @@
                  }
 
                  isRage = toxicity >= 100;
+
+                 const rageSfx = document.getElementById("rageSound");
+                 if (isRage && sfxEnabled) {
+                     if (!isRageSoundPlaying) {
+                         rageSfx.currentTime = 0;
+                         rageSfx.play();
+                         isRageSoundPlaying = true;
+                     }
+                 } else {
+                     rageSfx.pause();
+                     isRageSoundPlaying = false;
+                 }
+
                  document.getElementById("toxic-bar").style.height = toxicity + "%";
                  ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
                  ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
@@ -411,6 +425,8 @@
 
          async function handleGameOver() {
              document.getElementById("bgMusic").pause();
+             document.getElementById("rageSound").pause();
+             isRageSoundPlaying = false;
              
              if (sfxEnabled) {
                 const deathSfx = document.getElementById("deathSound");
@@ -448,8 +464,14 @@
               isPaused = !isPaused;
               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
               const music = document.getElementById("bgMusic");
+              const rageSfx = document.getElementById("rageSound");
               if (musicEnabled) {
                 isPaused ? music.pause() : music.play();
+              }
+              if (isPaused) {
+                  rageSfx.pause();
+              } else if (isRage && sfxEnabled) {
+                  rageSfx.play();
               }
               if(!isPaused) gameLoop();
          }
@@ -476,4 +498,3 @@
      </script>
 </body>
 </html>
-

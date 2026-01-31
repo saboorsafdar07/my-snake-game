@@ -77,14 +77,14 @@
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
 
      <div id="invite-notif">
-         <h3 id="invite-msg">Player wants 1v1!</h3>
-         <button onclick="accept1v1()">ACCEPT CHALLENGE</button>
+         <h3 id="invite-msg">CHALLENGE RECEIVED!</h3>
+         <button onclick="accept1v1()">ACCEPT ⚔️</button>
          <button onclick="decline1v1()" style="background:#555">DECLINE</button>
      </div>
 
      <div id="start-screen">
           <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
-          <input type="text" id="playerName" placeholder="Name" maxlength="12">
+          <input type="text" id="playerName" placeholder="Enter Name" maxlength="12">
           <button onclick="attemptStart()">START GAME ⚡</button>
           <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
           <div class="credits">Created by Saboor 🍭</div>
@@ -92,8 +92,8 @@
 
      <div id="leaderboard-screen">
           <h2 style="color:#00f2ff;">HALL OF FAME</h2>
-          <p style="font-size:10px">Click an online player to Challenge ⚔️</p>
-          <div id="leaderboard-list">Loading players...</div>
+          <p style="font-size:10px">Click a name with a <span style="color:#25D366">●</span> to Challenge!</p>
+          <div id="leaderboard-list">Loading...</div>
           <button onclick="document.getElementById('leaderboard-screen').style.display='none'">CLOSE</button>
      </div>
 
@@ -103,6 +103,11 @@
           <h2 id="over-score">SCORE: 0</h2>
           <button onclick="location.reload()">TRY AGAIN</button>
           <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
+     </div>
+
+     <div id="pause-overlay">
+          <h1>PAUSED</h1>
+          <button onclick="togglePause()">RESUME</button>
      </div>
 
      <div class="stats-bar">
@@ -125,31 +130,31 @@
           const canvas = document.getElementById("gameCanvas");
           const ctx = canvas.getContext("2d");
 
-          // ALL ORIGINAL ROASTS RESTORED
+          // --- FULL LIST OF ORIGINAL ROASTS ---
           const startRoasts = ["Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.", "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.", "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!", "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.", "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.", "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.", "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.", "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?", "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.", "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."];
           const crashRoasts = ["PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.", "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?", "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.", "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.", "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.", "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?", "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.", "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.", "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.", "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.", "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."];
-          const backhandedPraise = ["NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.", "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.", "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory."];
-          const missRoasts = ["EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD."];
+          const backhandedPraise = ["NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.", "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.", "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.", "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.", "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.", "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.", "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.", "NEW RECORD! Now try doing that in real life."];
+          const missRoasts = ["EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.", "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!", "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?", "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!", "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.", "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.", "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."];
 
           let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
           let snake2 = [];
           let dx = 20, dy = 0, nextDir = {dx: 20, dy: 0};
-          let totalScore = 0, p2Score = 0, gameRunning = false, currentPlayer = "", myId = "";
+          let totalScore = 0, p2Score = 0, gameRunning = false, isPaused = false, currentPlayer = "", myId = "";
           let foodX, foodY, toxicity = 0, chatTimer = 0, chatMsg = "", is1v1 = false, roomKey = "", opponentId = "";
 
-          // 1V1 INVITE LISTENER
+          // --- REAL-TIME 1v1 INVITE LISTENER ---
           setInterval(async () => {
-              if (myId && !is1v1) {
+              if (myId && !is1v1 && !gameRunning) {
                   const r = await fetch(`${DB_URL}invites/${myId}.json`);
                   const inv = await r.json();
                   if (inv) {
                       opponentId = inv.from;
                       roomKey = inv.room;
-                      document.getElementById("invite-msg").innerText = inv.fromName + " challenges you!";
+                      document.getElementById("invite-msg").innerText = inv.fromName + " CHALLENGES YOU!";
                       document.getElementById("invite-notif").style.display = "block";
                   }
               }
-          }, 2000);
+          }, 1500);
 
           function attemptStart() {
               const name = document.getElementById("playerName").value.trim();
@@ -195,17 +200,17 @@
 
           async function sendInvite(id, name) {
               if (id === myId) return;
-              roomKey = [myId, id].sort().join("_v_");
+              roomKey = [myId, id].sort().join("_vs_");
               await fetch(`${DB_URL}invites/${id}.json`, {
                   method: 'PUT',
                   body: JSON.stringify({ from: myId, fromName: currentPlayer, room: roomKey })
               });
-              alert("Request sent to " + name + "! Stay here, the game will start when they accept.");
+              alert("Request sent! Stay here, match starts when " + name + " accepts.");
               
               const check = setInterval(async () => {
                   const r = await fetch(`${DB_URL}rooms/${roomKey}/active.json`);
                   if (await r.json()) { clearInterval(check); start1v1(); }
-              }, 2000);
+              }, 1500);
           }
 
           async function accept1v1() {
@@ -226,18 +231,17 @@
               document.getElementById("start-screen").style.display = "none";
               document.getElementById("leaderboard-screen").style.display = "none";
               
-              // Direct Sync
               setInterval(() => {
-                  if(!gameRunning) return;
-                  fetch(`${DB_URL}rooms/${roomKey}/${myId}.json`, { method: 'PUT', body: JSON.stringify({ s: snake, sc: totalScore }) });
-              }, 150);
+                  if(gameRunning) fetch(`${DB_URL}rooms/${roomKey}/${myId}.json`, { method: 'PUT', body: JSON.stringify({ s: snake, sc: totalScore }) });
+              }, 100);
               
               setInterval(async () => {
-                  if(!gameRunning) return;
-                  const r = await fetch(`${DB_URL}rooms/${roomKey}/${opponentId}.json`);
-                  const d = await r.json();
-                  if(d) { snake2 = d.s; p2Score = d.sc; document.getElementById("p2ScoreVal").innerText = p2Score; }
-              }, 150);
+                  if(gameRunning) {
+                      const r = await fetch(`${DB_URL}rooms/${roomKey}/${opponentId}.json`);
+                      const d = await r.json();
+                      if(d) { snake2 = d.s; p2Score = d.sc; document.getElementById("p2ScoreVal").innerText = p2Score; }
+                  }
+              }, 100);
               createFood();
               gameLoop();
           }
@@ -248,8 +252,8 @@
           }
 
           function gameLoop() {
-              if (!gameRunning) return;
-              let speed = Math.max(50, 150 - (totalScore / 2));
+              if (!gameRunning || isPaused) return;
+              let speed = Math.max(50, 160 - (totalScore / 2.5));
               setTimeout(() => {
                   dx = nextDir.dx; dy = nextDir.dy;
                   ctx.fillStyle = "#0f0524"; ctx.fillRect(0,0,800,600);
@@ -258,21 +262,25 @@
                   if (head.x < 0) head.x = 780; else if (head.x >= 800) head.x = 0;
                   if (head.y < 0) head.y = 580; else if (head.y >= 600) head.y = 0;
 
-                  if (snake.slice(1).some(p => p.x === head.x && p.y === head.y)) { handleGameOver(); return; }
+                  if (snake.some(p => p.x === head.x && p.y === head.y)) { handleGameOver(); return; }
                   snake.unshift(head);
 
                   if (head.x === foodX && head.y === foodY) {
-                      totalScore += 10; toxicity = Math.max(0, toxicity - 30);
+                      totalScore += 10; toxicity = Math.max(0, toxicity - 35);
                       document.getElementById("scoreVal").innerText = totalScore;
+                      document.getElementById("eatSound").currentTime = 0;
                       document.getElementById("eatSound").play().catch(e=>{});
                       createFood();
                   } else { 
                       snake.pop(); 
                       let dist = Math.sqrt(Math.pow(head.x-foodX,2)+Math.pow(head.y-foodY,2));
-                      if(dist < 50) toxicity += 0.5;
+                      if(dist < 60) {
+                          toxicity += 0.8;
+                          if(toxicity > 100) toxicity = 100;
+                      }
                   }
 
-                  document.getElementById("toxic-bar").style.height = (toxicity % 100) + "%";
+                  document.getElementById("toxic-bar").style.height = toxicity + "%";
                   
                   // Draw Food
                   ctx.fillStyle = "#ff0055"; ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
@@ -291,6 +299,11 @@
                       });
                   }
 
+                  if (chatTimer > 0) {
+                      ctx.fillStyle = "white"; ctx.font = "14px Courier New"; ctx.textAlign = "center";
+                      ctx.fillText(chatMsg, snake[0].x + 10, snake[0].y - 15);
+                      chatTimer--;
+                  }
                   gameLoop();
               }, speed);
           }
@@ -298,9 +311,21 @@
           function handleGameOver() {
               gameRunning = false;
               document.getElementById("deathSound").play().catch(e=>{});
-              if(!is1v1) saveScore(currentPlayer, totalScore);
+              const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
               
-              document.getElementById("over-roast").innerText = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
+              if(!is1v1) {
+                  if (totalScore > localHigh) {
+                      chatMsg = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
+                      localStorage.setItem("snakeHighScore", totalScore);
+                      saveScore(currentPlayer, totalScore);
+                  } else {
+                      chatMsg = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
+                  }
+              } else {
+                  chatMsg = totalScore > p2Score ? "YOU WON! BUT STILL TRASH." : "LOST TO A FRIEND? EMBARRASSING.";
+              }
+
+              document.getElementById("over-roast").innerText = chatMsg;
               document.getElementById("over-score").innerText = "SCORE: " + totalScore;
               document.getElementById("game-over-screen").style.display = "block";
           }
@@ -310,15 +335,22 @@
           }
 
           function updateStatus(s) {
-              if(myId) fetch(`${DB_URL}users/${myId}.json`, { method: 'PATCH', body: JSON.stringify({ status: s }) });
+              if(myId) fetch(`${DB_URL}users/${myId}.json`, { method: 'PATCH', body: JSON.stringify({ name: currentPlayer, status: s }) });
           }
 
           function shareToWhatsApp() {
-              const text = `🐍 THE SNAKE GAME 🐍\nScore: ${totalScore}\nChallenge: ${window.location.href}`;
+              const text = `🐍 THE SNAKE: SABOOR'S RAGE 🐍\nScore: ${totalScore}\nRoast: ${chatMsg}\nPlay here: ${window.location.href}`;
               window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
           }
 
+          function togglePause() {
+               if(!gameRunning || is1v1) return;
+               isPaused = !isPaused;
+               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
+          }
+
           document.addEventListener("keydown", e => {
+              if (e.keyCode === 80) togglePause();
               if (e.keyCode === 37 && dx === 0) nextDir = { dx: -20, dy: 0 };
               if (e.keyCode === 38 && dy === 0) nextDir = { dx: 0, dy: -20 };
               if (e.keyCode === 39 && dx === 0) nextDir = { dx: 20, dy: 0 };

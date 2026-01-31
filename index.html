@@ -12,14 +12,19 @@
             font-family: 'Courier New', Courier, monospace;
             overflow: hidden; user-select: none;
         }
-        #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen, #settings-modal, #one-v-one-screen {
+        
+        /* Fixed Stacking Order */
+        #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen, #settings-modal {
             position: absolute; background: rgba(15, 5, 36, 0.98);
             padding: 40px; border: 3px solid #00f2ff; text-align: center;
-            z-index: 100; box-shadow: 0 0 50px #00f2ff;
+            box-shadow: 0 0 50px #00f2ff; display: none;
         }
-        #pause-overlay, #leaderboard-screen, #game-over-screen, #settings-modal, #one-v-one-screen { display: none; }
-        #leaderboard-screen, #settings-modal { width: 400px; max-height: 80vh; overflow-y: auto; }
-        
+        #start-screen { display: block; z-index: 10; }
+        #leaderboard-screen { z-index: 20; width: 420px; max-height: 85vh; overflow-y: auto; }
+        #settings-modal { z-index: 30; width: 400px; }
+        #pause-overlay { z-index: 40; }
+        #game-over-screen { z-index: 50; }
+
         /* SETTINGS GEAR */
         .settings-toggle {
             position: fixed; top: 20px; right: 20px;
@@ -49,13 +54,12 @@
         
         canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
         .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; cursor: pointer; }
-        .lb-item:hover { background: rgba(0, 242, 255, 0.1); }
-        .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
+        .lb-item:hover { background: rgba(0, 242, 255, 0.2); }
+        .lb-header { color: #ff0055; font-weight: bold; margin: 15px 0 5px 0; border-bottom: 2px solid #ff0055; text-align: left; font-size: 14px; }
         .mvp-crown { color: gold; font-size: 18px; text-shadow: 0 0 10px gold; }
         
-        /* Circular Audio Toggle inside settings */
-        .audio-circ { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #00f2ff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin: 0 10px; }
-        .audio-circ.off { border-color: #ff0055; color: #ff0055; }
+        .audio-circ { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #00f2ff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin: 0 10px; font-weight: bold; }
+        .audio-circ.off { border-color: #ff0055; color: #ff0055; box-shadow: inset 0 0 10px #ff0055; }
     </style>
 </head>
 <body>
@@ -69,19 +73,18 @@
     </div>
 
     <div id="settings-modal">
-        <h2>HUB SETTINGS</h2>
+        <h2 style="color:#00f2ff; margin-top:0;">HUB SETTINGS</h2>
         <div class="modal-section">
-            <div class="audio-circ" id="musicBtn" onclick="toggleMusic()">M</div>
-            <div class="audio-circ" id="sfxBtn" onclick="toggleSFX()">S</div>
-            <p style="font-size: 10px; margin-top: 5px;">M=Music, S=SFX</p>
+            <div class="audio-circ" id="musicBtn" onclick="toggleMusic()">MUSIC</div>
+            <div class="audio-circ" id="sfxBtn" onclick="toggleSFX()">SFX</div>
         </div>
         <div class="modal-section">
-            <h3>FRIEND REQUESTS</h3>
-            <div id="req-box">No new notifications.</div>
+            <h3 style="font-size:14px; margin:0;">PENDING REQUESTS</h3>
+            <div id="req-box" style="margin-top:10px;">No new notifications.</div>
         </div>
         <div class="modal-section">
-            <h3>FRIENDS ONLINE</h3>
-            <div id="friends-box">Go to leaderboard to add friends!</div>
+            <h3 style="font-size:14px; margin:0;">MY FRIENDS</h3>
+            <div id="friends-box" style="margin-top:10px; font-size:12px;">Add friends via Leaderboard.</div>
         </div>
         <button onclick="toggleSettings()">BACK TO GAME</button>
     </div>
@@ -95,10 +98,10 @@
     </div>
 
     <div id="leaderboard-screen">
-        <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
-        <p style="font-size: 10px; color: #ff0055;">CLICK NAME TO SEND FRIEND REQUEST</p>
-        <div id="leaderboard-list">Loading...</div>
-        <button onclick="closeLeaderboard()">CLOSE</button>
+        <h2 style="color:#00f2ff; margin-top:0;">HALL OF FAME</h2>
+        <p style="font-size: 11px; color: #ff0055; margin:0;">TIP: CLICK A PLAYER TO SEND FRIEND REQUEST</p>
+        <div id="leaderboard-list"></div>
+        <button onclick="closeLeaderboard()" style="margin-top:20px;">CLOSE</button>
     </div>
 
     <div id="game-over-screen">
@@ -106,7 +109,7 @@
         <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
         <h2 id="over-score">SCORE: 0</h2>
         <button onclick="location.reload()">TRY AGAIN</button>
-        <button class="whatsapp-btn" id="waBtn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
+        <button class="whatsapp-btn" id="waBtn" onclick="shareToWhatsApp()">SHARE RESULT 📲</button>
     </div>
 
     <div id="pause-overlay">
@@ -134,14 +137,13 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // --- FULL ROAST LIBRARIES (RESTORED) ---
+        // --- FULL LIBRARIES ---
         const startRoasts = ["Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.", "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.", "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!", "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.", "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.", "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.", "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.", "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?", "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.", "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."];
-        const crashRoasts = ["PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.", "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?", "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.", "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.", "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.", "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?", "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.", "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.", "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.", "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.", "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."];
+        const crashRoasts = ["PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.", "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?", "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.", "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.", "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.", "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?", "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.", "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.", "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.", "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT of THE DAY.", "YOU'RE NOT BUILT FOR THIS.", "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."];
         const backhandedPraise = ["NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.", "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.", "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.", "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.", "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.", "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.", "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.", "NEW RECORD! Now try doing that in real life."];
         const missRoasts = ["EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.", "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!", "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?", "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!", "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.", "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.", "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.", "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."];
-        const v1Roasts = ["Imagine being a friend and losing this bad.", "Rematch? So you can lose again?", "I'm the Alpha snake here.", "You move like a broken robot.", "Friends don't let friends play this bad.", "Is your internet lagging or just your brain?"];
 
-        // --- GAME VARIABLES ---
+        // --- GAME STATE ---
         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
         let dx = 20, dy = 0, nextDir = {dx: 20, dy: 0}, totalScore = 0;
         let foodX, foodY, toxicity = 0, isRage = false, gameRunning = false, isPaused = false;
@@ -149,19 +151,20 @@
         let globalBestScore = 0, globalBestName = "NONE", finalRoastMessage = "";
         let musicEnabled = true, sfxEnabled = true;
 
-        // --- SETTINGS HUB ---
+        // --- NAVIGATION & UI ---
         function toggleSettings() {
             const mod = document.getElementById("settings-modal");
-            mod.style.display = (mod.style.display === "block") ? "none" : "block";
-            if(mod.style.display === "block") refreshSocial();
+            const isOpen = mod.style.display === "block";
+            mod.style.display = isOpen ? "none" : "block";
+            if(!isOpen) refreshSocialHub();
         }
 
         function toggleMusic() {
             musicEnabled = !musicEnabled;
             const b = document.getElementById("bgMusic");
             const btn = document.getElementById("musicBtn");
-            if(musicEnabled) { b.play(); btn.classList.remove("off"); } 
-            else { b.pause(); btn.classList.add("off"); }
+            musicEnabled ? b.play() : b.pause();
+            btn.classList.toggle("off", !musicEnabled);
         }
 
         function toggleSFX() {
@@ -169,34 +172,25 @@
             document.getElementById("sfxBtn").classList.toggle("off", !sfxEnabled);
         }
 
-        // --- SOCIAL CORE ---
-        async function refreshSocial() {
+        async function refreshSocialHub() {
             if(!currentPlayer) return;
-            // Fetch Requests
-            const res = await fetch(`${DB_URL}requests/${currentPlayer.toLowerCase()}.json`);
-            const data = await res.json();
-            const box = document.getElementById("req-box");
-            if(!data) { box.innerHTML = "No pending requests."; }
-            else {
-                box.innerHTML = Object.keys(data).map(k => `
-                    <div class="friend-row">
-                        <span>${k} wants to play!</span>
-                        <button onclick="acceptFriend('${k}')" class="small-btn">ACCEPT</button>
-                    </div>
-                `).join('');
-            }
+            try {
+                const res = await fetch(`${DB_URL}requests/${currentPlayer.toLowerCase()}.json`);
+                const data = await res.json();
+                const box = document.getElementById("req-box");
+                if(!data) box.innerHTML = "No pending requests.";
+                else {
+                    box.innerHTML = Object.keys(data).map(k => `
+                        <div class="friend-row">
+                            <span>${k.toUpperCase()}</span>
+                            <button onclick="acceptFriend('${k}')" style="padding:5px 10px; font-size:10px;">ACCEPT</button>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
         }
 
-        async function sendFriendRequest(target) {
-            if(!currentPlayer || target.toLowerCase() === currentPlayer.toLowerCase()) return;
-            await fetch(`${DB_URL}requests/${target.toLowerCase()}/${currentPlayer.toLowerCase()}.json`, {
-                method: 'PUT',
-                body: JSON.stringify({from: currentPlayer, timestamp: Date.now()})
-            });
-            alert("Friend Request Sent to " + target);
-        }
-
-        // --- SOLO CORE ---
+        // --- LEADERBOARD & MVP ---
         async function fetchGlobalHigh() {
             try {
                 const response = await fetch(DB_URL + "scores.json");
@@ -214,20 +208,43 @@
         async function showLeaderboard() {
             document.getElementById("leaderboard-screen").style.display = "block";
             const list = document.getElementById("leaderboard-list");
-            list.innerHTML = "Syncing...";
-            const response = await fetch(DB_URL + "scores.json");
-            const data = await response.json();
-            if (data) {
-                const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                list.innerHTML = sorted.map((s, i) => `
-                    <div class="lb-item" onclick="sendFriendRequest('${s.name}')">
-                        <span>${i+1}. ${s.name} ${i===0?'<span class="mvp-crown">👑</span>':''}</span>
-                        <span>${s.score}</span>
-                    </div>
-                `).join('');
-            }
+            list.innerHTML = "Syncing Records...";
+            try {
+                const response = await fetch(DB_URL + "scores.json");
+                const data = await response.json();
+                if (data) {
+                    const sorted = Object.values(data).sort((a,b) => b.score - a.score);
+                    let html = `<div class="lb-header">TOP 5 LEGENDS</div>`;
+                    html += sorted.slice(0, 5).map((s, i) => `
+                        <div class="lb-item" onclick="sendFriendRequest('${s.name}')">
+                            <span>${i+1}. ${s.name} ${i===0?'<span class="mvp-crown">👑 MVP</span>':''}</span>
+                            <span>${s.score}</span>
+                        </div>`).join('');
+                    
+                    html += `<div class="lb-header" style="margin-top:20px;">ALL CONTENDERS</div>`;
+                    html += sorted.map((s, i) => `
+                        <div class="lb-item" onclick="sendFriendRequest('${s.name}')">
+                            <span>${i+1}. ${s.name} ${i===0?'👑':''}</span>
+                            <span>${s.score}</span>
+                        </div>`).join('');
+                    list.innerHTML = html;
+                }
+            } catch(e) { list.innerHTML = "Error loading scores."; }
         }
 
+        async function sendFriendRequest(target) {
+            if(!currentPlayer) return alert("Start game once to set your name first!");
+            if(target.toLowerCase() === currentPlayer.toLowerCase()) return;
+            try {
+                await fetch(`${DB_URL}requests/${target.toLowerCase()}/${currentPlayer.toLowerCase()}.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify({from: currentPlayer, time: Date.now()})
+                });
+                alert("Request sent to " + target);
+            } catch(e) { alert("Server Busy."); }
+        }
+
+        // --- GAMEPLAY ---
         function attemptStart() {
             const name = document.getElementById("playerName").value.trim();
             if (name.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
@@ -254,16 +271,15 @@
                 dx = nextDir.dx; dy = nextDir.dy;
                 ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
                 
-                // WALL WRAP
                 let nextX = snake[0].x + dx;
                 let nextY = snake[0].y + dy;
+                
+                // WALL WRAP
                 if(nextX < 0) nextX = 780; else if(nextX >= 800) nextX = 0;
                 if(nextY < 0) nextY = 580; else if(nextY >= 600) nextY = 0;
 
-                // Collision
                 if (snake.some(p => p.x === nextX && p.y === nextY)) { handleGameOver(); return; }
 
-                // Miss Detection
                 let dist = Math.sqrt(Math.pow(nextX-foodX,2)+Math.pow(nextY-foodY,2));
                 if(dist < 35) wasNear = true;
                 else if(wasNear && dist > 45) {
@@ -288,7 +304,6 @@
                 document.getElementById("toxic-bar").style.height = toxicity + "%";
                 document.getElementById("scoreVal").innerText = totalScore;
 
-                // Draw
                 ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
                 ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
@@ -296,16 +311,15 @@
                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
                     ctx.fillRect(p.x, p.y, 18, 18);
                     if(i===0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
-                        ctx.fillText("👑", p.x+5, p.y-5);
+                        ctx.fillStyle="gold"; ctx.font="20px Arial"; ctx.fillText("👑", p.x+4, p.y-5);
                     }
                 });
 
                 if(chatTimer > 0) {
-                    ctx.fillStyle = "white"; ctx.font = "12px Arial";
-                    ctx.fillText(chatMsg, snake[0].x, snake[0].y-10);
+                    ctx.fillStyle = "white"; ctx.font = "14px Courier New";
+                    ctx.fillText(chatMsg, snake[0].x - 20, snake[0].y - 15);
                     chatTimer--;
                 }
-
                 gameLoop();
             }, speed);
         }
@@ -341,6 +355,7 @@
         }
 
         function togglePause() { 
+            if(!gameRunning) return;
             isPaused = !isPaused; 
             document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
             if(!isPaused) gameLoop();

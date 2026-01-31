@@ -1,634 +1,265 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Snake - Saboor's Global Rage & Social</title>
-    <style>
-        body {
-            background-color: #0d0221;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; margin: 0; color: #00f2ff;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden; user-select: none;
-        }
-        
-        /* Layering & Modals */
-        #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen, #settings-modal, #duel-invite-popup {
-            position: absolute; background: rgba(15, 5, 36, 0.98);
-            padding: 30px; border: 3px solid #00f2ff; text-align: center;
-            box-shadow: 0 0 50px #00f2ff; display: none;
-        }
-        #start-screen { display: block; z-index: 10; }
-        #leaderboard-screen { z-index: 100; width: 420px; max-height: 85vh; overflow-y: auto; }
-        #settings-modal { z-index: 200; width: 400px; }
-        #duel-invite-popup { z-index: 1000; top: 20px; right: 20px; border-color: #ff0055; display:none; }
-
-        .settings-toggle {
-            position: fixed; top: 20px; right: 20px;
-            width: 55px; height: 55px; border-radius: 50%;
-            background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 900; transition: 0.3s;
-        }
-        .settings-toggle:hover { background: rgba(0, 242, 255, 0.3); transform: rotate(45deg); }
-        .settings-toggle svg { width: 30px; fill: #00f2ff; }
-
-        .modal-section { border-bottom: 1px solid rgba(0, 242, 255, 0.3); padding: 15px 0; }
-        .friend-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; font-size: 14px; background: rgba(255,255,255,0.05); padding: 8px; }
-
-        .credits { position: absolute; bottom: 10px; right: 15px; font-size: 12px; color: #00f2ff; opacity: 0.7; }
-        .main-container { position: relative; display: flex; align-items: center; justify-content: center; }
-        
-        .toxic-wrapper { position: absolute; right: -30px; display: none; flex-direction: column; align-items: center; }
-        .toxic-label { font-size: 10px; font-weight: bold; color: #ff0055; writing-mode: vertical-rl; transform: rotate(180deg); margin-bottom: 5px;}
-        .toxic-container-vertical { width: 10px; height: 300px; background: #1a1a3a; border: 2px solid #00f2ff; border-radius: 10px; overflow: hidden; }
-        #toxic-bar { width: 100%; height: 0%; background: linear-gradient(0deg, #00f2ff, #ff0055); transition: height 0.3s ease; }
-        
-        input { background: #16213e; border: 2px solid #00f2ff; color: white; padding: 12px; margin: 20px auto; width: 220px; text-align: center; font-size: 18px; outline: none; display: block; }
-        button { background: #ff0055; color: white; border: none; padding: 12px 25px; font-weight: bold; font-size: 14px; cursor: pointer; text-transform: uppercase; margin: 5px; transition: 0.2s; }
-        button:hover { background: #00f2ff; color: #000; }
-        .whatsapp-btn { background: #25D366; }
-        
-        .stats-bar { display: flex; justify-content: space-between; width: 800px; padding: 10px 20px; font-size: 18px; background: rgba(0, 242, 255, 0.1); margin-bottom: 10px; }
-        canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
-        
-        .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 10px; cursor: pointer; }
-        .lb-item:hover { background: rgba(0, 242, 255, 0.2); }
-        .lb-header { color: #ff0055; font-weight: bold; margin: 15px 0 5px 0; border-bottom: 2px solid #ff0055; text-align: left; }
-        
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .online { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
-        .offline { background: #555; }
-
-        .audio-circ { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #00f2ff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin: 0 10px; font-size: 10px; }
-        .audio-circ.off { border-color: #ff0055; color: #ff0055; }
-    </style>
+<meta charset="UTF-8">
+<title>The Snake – Solo & Friends 1v1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  margin:0;
+  background:#0b0620;
+  color:#00f2ff;
+  font-family:Courier New, monospace;
+  text-align:center;
+}
+canvas{
+  background:#050012;
+  border:4px solid #00f2ff;
+  display:block;
+  margin:auto;
+}
+.panel{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#050012;
+  border:3px solid #00f2ff;
+  padding:20px;
+}
+button,input{
+  margin:5px;
+  padding:10px;
+  background:#111;
+  border:2px solid #00f2ff;
+  color:#00f2ff;
+}
+#menu,#friendsPanel,#chatPanel,#resultPanel{display:none}
+#chatLog{
+  height:150px;
+  overflow-y:auto;
+  border:1px solid #00f2ff;
+  padding:5px;
+  margin-bottom:5px;
+}
+</style>
 </head>
+
 <body>
 
-    <audio id="bgMusic" loop src="music.mp3"></audio>
-    <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
-    <audio id="deathSound" src="death.mp3" preload="auto"></audio>
+<canvas id="game" width="600" height="400"></canvas>
 
-    <div class="settings-toggle" onclick="toggleSettings()">
-        <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.85,9.48l2.03,1.58C4.84,11.36,4.81,11.67,4.81,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/></svg>
-    </div>
+<div id="menu" class="panel">
+  <h2>THE SNAKE</h2>
+  <input id="playerName" placeholder="Your name">
+  <br>
+  <button onclick="startSolo()">SOLO</button>
+  <button onclick="openFriends()">1v1 WITH FRIEND</button>
+</div>
 
-    <div id="duel-invite-popup">
-        <p id="duel-invite-text">Challenge from Player!</p>
-        <button onclick="respondDuel(true)">ACCEPT</button>
-        <button onclick="respondDuel(false)">DECLINE</button>
-    </div>
+<div id="friendsPanel" class="panel">
+  <h3>Friends</h3>
+  <div id="friendsList"></div>
+  <input id="friendInput" placeholder="Add friend">
+  <br>
+  <button onclick="addFriend()">ADD</button>
+  <button onclick="backMenu()">BACK</button>
+</div>
 
-    <div id="settings-modal">
-        <h2 style="color:#00f2ff; margin-top:0;">HUB SETTINGS</h2>
-        <div class="modal-section">
-            <div class="audio-circ" id="musicBtn" onclick="toggleMusic()">MUSIC</div>
-            <div class="audio-circ" id="sfxBtn" onclick="toggleSFX()">SFX</div>
-        </div>
-        <div class="modal-section">
-            <h3 style="font-size:14px; margin:0;">BEEF REQUESTS</h3>
-            <div id="req-box" style="margin-top:10px; font-size:12px;">Login to see beef.</div>
-        </div>
-        <div class="modal-section">
-            <h3 style="font-size:14px; margin:0;">MY FRIENDS</h3>
-            <div id="friends-list" style="margin-top:10px;"></div>
-        </div>
-        <button onclick="toggleSettings()">BACK</button>
-    </div>
+<div id="chatPanel" class="panel">
+  <h3 id="chatTitle"></h3>
+  <div id="chatLog"></div>
+  <input id="chatMsg" placeholder="Message">
+  <button onclick="sendMsg()">SEND</button>
+  <br><br>
+  <button onclick="invite1v1()">INVITE 1v1</button>
+  <button onclick="closeChat()">CLOSE</button>
+</div>
 
-    <div id="start-screen">
-        <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
-        <input type="text" id="playerName" placeholder="Name" maxlength="16">
-        <button onclick="attemptStart()">QUICK START ⚡</button>
-        <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
-        <div class="credits">Created by Saboor 🍭</div>
-    </div>
+<div id="resultPanel" class="panel">
+  <h2 id="resultText"></h2>
+  <p id="scoreText"></p>
+  <button onclick="rematch()">REMATCH</button>
+  <button onclick="backMenu()">MENU</button>
+  <button onclick="share()">WHATSAPP</button>
+</div>
 
-    <div id="leaderboard-screen">
-        <h2 style="color:#00f2ff; margin-top:0;">HALL OF FAME</h2>
-        <p style="font-size: 12px; color: #ff0055; margin:0;">CLICK A NAME TO ADD FRIEND</p>
-        <div id="leaderboard-list"></div>
-        <button onclick="closeLeaderboard()" style="margin-top:20px;">CLOSE</button>
-    </div>
+<script>
+/* ================= CONFIG ================= */
+const DB = "YOUR_FIREBASE_URL"; // 🔴 CHANGE THIS
 
-    <div id="game-over-screen">
-        <h1 id="over-title">WASTED</h1>
-        <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
-        <h2 id="over-score">SCORE: 0</h2>
-        <div id="post-game-btns">
-            <button onclick="location.reload()">MENU</button>
-            <button id="rematchBtn" style="display:none;" onclick="inviteToDuel(lastOpponent)">REMATCH ⚔️</button>
-            <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE 📲</button>
-        </div>
-    </div>
+/* ================= GLOBAL ================= */
+const cvs=document.getElementById("game");
+const ctx=cvs.getContext("2d");
 
-    <div id="pause-overlay"><h1>PAUSED</h1><button onclick="togglePause()">RESUME (P)</button></div>
+let me="", friend="", room="";
+let mode="menu";
+let snake=[], enemy=[], food={};
+let dir={x:20,y:0}, edir={x:-20,y:0};
+let score=0, escore=0;
+let running=false;
 
-    <div class="stats-bar">
-        <div>SCORE: <span id="scoreVal">0</span> <span id="p2ScoreWrap" style="display:none;">| P2: <span id="p2ScoreVal">0</span></span></div>
-        <div style="color: #ff0055;" id="wr-box">WR: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
-    </div>
+/* ================= ROASTS ================= */
+const soloRoasts=["Too Easy 😎","Still Hungry 🐍","Keep Going!"];
+const winRoasts=["ABSOLUTE DOMINATION 😈","YOU OWNED HIM","EZ WIN"];
+const loseRoasts=["SENT BACK TO PRACTICE","OUTPLAYED","TRY AGAIN"];
 
-    <div class="main-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div class="toxic-wrapper" id="toxic-ui">
-            <div class="toxic-label">TOXICITY</div>
-            <div class="toxic-container-vertical"><div id="toxic-bar"></div></div>
-        </div>
-    </div>
+/* ================= INIT ================= */
+menu.style.display="block";
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+/* ================= MENU ================= */
+function startSolo(){
+  me=playerName.value.trim();
+  if(!me)return alert("Enter name");
+  mode="solo";
+  startGame();
+}
+function openFriends(){
+  me=playerName.value.trim();
+  if(!me)return alert("Enter name");
+  menu.style.display="none";
+  friendsPanel.style.display="block";
+  loadFriends();
+}
+function backMenu(){location.reload();}
 
-    <script>
-        // --- FIREBASE CONFIG ---
-        const firebaseConfig = { databaseURL: "https://snake-competition-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+/* ================= FRIEND MEMORY ================= */
+async function addFriend(){
+  const f=friendInput.value.trim();
+  if(!f)return;
+  await fetch(DB+`friends/${me}/${f}.json`,{method:"PUT",body:"true"});
+  loadFriends();
+}
+async function loadFriends(){
+  friendsList.innerHTML="";
+  const data=await fetch(DB+`friends/${me}.json`).then(r=>r.json())||{};
+  Object.keys(data).forEach(f=>{
+    const b=document.createElement("button");
+    b.textContent=f;
+    b.onclick=()=>openChat(f);
+    friendsList.appendChild(b);
+  });
+}
 
-        // --- CONSTANTS & ROASTS ---
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        
-        const startRoasts = ["Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
-             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
-             "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
-             "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.",
-             "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.",
-             "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.",
-             "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.",
-             "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?",
-             "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.",
-             "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."];
-        const crashRoasts = [ "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.",
-             "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?",
-             "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.",
-             "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.",
-             "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.",
-             "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?",
-             "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.",
-             "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.",
-             "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.",
-             "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.",
-             "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."];
-        const backhandedPraise = ["NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.",
-             "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
-             "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.",
-             "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.",
-             "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.",
-             "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.",
-             "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.",
-             "NEW RECORD! Now try doing that in real life."];
-        const duelRoasts = ["U smell like defeat.", "Is your WiFi powered by a hamster?", "My grandma plays better than u.", "Stop feeding me apples, loser!", "Cry more.", "Ur snake is looking thin, like ur skill.", "Imagine losing to me lol.", "Is this your first time using a screen?"];
-        const missRoasts = [ "WIFI FROM 1994?", "EYES: DECORATIVE ONLY.", "LAG? NO, JUST BAD.", "SNAKE MOVES, YOU DON'T.", "PING: 999. IQ: 9.", "PIXEL PHOBIA?", "CHOKE ARTIST!", "404: SKILL NOT FOUND.", "LOG OFF, CHIEF.", 
-    "BORN TO LOSE.", "PRACTICE ON PACMAN.", "MISSING IS A HOBBY?", "RETIRE ALREADY.", 
-    "EMBARRASSING.", "BLUETOOTH HIT.", "GO TOUCH GRASS.", "SHOULD I JUDGE YOUR SKILLS?.", "IS YOUR BRAIN ON POWER SAVER?", "MAIN CHARACTER ENERGY? NO.", "PURE COMEDY.", "GIVE THE KEYBOARD TO A CAT.", "DELETE SYSTEM32.", "STAY IN THE LOBBY.", "REFLEXES OF A STATUE.", "BRUHHH.", "I’VE SEEN PLANTS AIM BETTER.", "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.",
-              "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!",
-              "MISSING IS YOUR ONLY SKILL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?",
-              "NICE AIM :)", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.",
-              "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.",
-              "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.",
-              "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.",
-              "WHY ARE YOU LIKE THIS?", "SKILL ISSUE!"];
+/* ================= CHAT ================= */
+function openChat(f){
+  friend=f;
+  friendsPanel.style.display="none";
+  chatPanel.style.display="block";
+  chatTitle.innerText="Chat with "+f;
+  listenChat();
+}
+function closeChat(){
+  chatPanel.style.display="none";
+  friendsPanel.style.display="block";
+}
+function sendMsg(){
+  if(!chatMsg.value)return;
+  fetch(DB+`chat/${me}_${friend}/${Date.now()}.json`,{
+    method:"PUT",
+    body:JSON.stringify({from:me,text:chatMsg.value})
+  });
+  chatMsg.value="";
+}
+function listenChat(){
+  setInterval(async()=>{
+    const data=await fetch(DB+`chat/${me}_${friend}.json`).then(r=>r.json())||{};
+    chatLog.innerHTML="";
+    Object.values(data).forEach(m=>{
+      chatLog.innerHTML+=`<div><b>${m.from}:</b> ${m.text}</div>`;
+    });
+    chatLog.scrollTop=9999;
+  },1000);
+}
 
-        // --- STATE ---
-        let currentPlayer = "";
-        let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
-        let snake2 = [{x: 100, y: 100}, {x: 80, y: 100}, {x: 60, y: 100}]; // P2
-        let dx = 20, dy = 0, nextDir = {dx: 20, dy: 0};
-        let dx2 = 20, dy2 = 0; // P2 Dir
-        let totalScore = 0, p2Score = 0;
-        let foodX, foodY, toxicity = 0, isRage = false, gameRunning = false, isPaused = false;
-        let chatTimer = 0, chatMsg = "", chatTimer2 = 0, chatMsg2 = "";
-        let globalBestScore = 0, globalBestName = "NONE", finalRoastMessage = "";
-        let isDuel = false, duelRoomId = null, isHost = false, lastOpponent = null;
-        let musicEnabled = true, sfxEnabled = true;
+/* ================= 1v1 ================= */
+async function invite1v1(){
+  room=me+"_"+friend;
+  await fetch(DB+`rooms/${room}.json`,{
+    method:"PUT",
+    body:JSON.stringify({p1:me,p2:friend,status:"start"})
+  });
+  start1v1();
+}
+function start1v1(){
+  mode="1v1";
+  chatPanel.style.display="none";
+  startGame();
+}
 
-        // --- SYSTEM INIT ---
-        window.onload = () => {
-            fetchGlobalHigh();
-            setInterval(updateMyStatus, 10000); 
-        };
+/* ================= GAME ================= */
+function startGame(){
+  snake=[{x:200,y:200}];
+  enemy=[{x:400,y:200}];
+  score=0;escore=0;
+  spawnFood();
+  running=true;
+  loop();
+}
+function spawnFood(){
+  food.x=Math.floor(Math.random()*29)*20;
+  food.y=Math.floor(Math.random()*19)*20;
+}
+function loop(){
+  if(!running)return;
+  ctx.fillStyle="#050012";
+  ctx.fillRect(0,0,600,400);
 
-        // --- SOCIAL & FRIENDS ---
-        async function updateMyStatus() {
-            if(currentPlayer) {
-                db.ref(`users/${currentPlayer.toLowerCase()}`).set({
-                    name: currentPlayer,
-                    lastSeen: Date.now(),
-                    online: true
-                });
-            }
-        }
+  draw(food,"#0ff");
+  move(snake,dir);
+  if(mode==="1v1") move(enemy,edir);
 
-        function toggleSettings() {
-            const mod = document.getElementById("settings-modal");
-            const start = document.getElementById("start-screen");
-            const isOpen = mod.style.display === "block";
-            mod.style.display = isOpen ? "none" : "block";
-            if (!isOpen) {
-                start.style.display = "none";
-                refreshSocialHub();
-            } else if (!gameRunning) {
-                start.style.display = "block";
-            }
-        }
+  if(hit(snake[0],food)){score++;spawnFood();}
+  if(mode==="1v1" && hit(enemy[0],food)){escore++;spawnFood();}
 
-        async function refreshSocialHub() {
-            if(!currentPlayer) return;
-            // Load Friends & Requests
-            db.ref(`requests/${currentPlayer.toLowerCase()}`).on('value', snap => {
-                const data = snap.val();
-                const box = document.getElementById("req-box");
-                if(!data) box.innerHTML = "No pending beef.";
-                else {
-                    box.innerHTML = Object.keys(data).map(k => `
-                        <div class="friend-row">
-                            <span>${k.toUpperCase()}</span>
-                            <button onclick="acceptFriend('${k}')">ACCEPT</button>
-                        </div>
-                    `).join('');
-                }
-            });
+  if(mode==="1v1"){
+    if(collide(snake[0],enemy)) endGame(false);
+    if(collide(enemy[0],snake)) endGame(true);
+  }
 
-            db.ref(`friends/${currentPlayer.toLowerCase()}`).on('value', async snap => {
-                const friends = snap.val();
-                const list = document.getElementById("friends-list");
-                if(!friends) list.innerHTML = "No friends? Sad.";
-                else {
-                    let html = "";
-                    for(let f in friends) {
-                        const userSnap = await db.ref(`users/${f}`).get();
-                        const isOnline = userSnap.val()?.online && (Date.now() - userSnap.val().lastSeen < 20000);
-                        html += `
-                            <div class="friend-row">
-                                <span><span class="status-dot ${isOnline?'online':'offline'}"></span>${f.toUpperCase()}</span>
-                                ${isOnline ? `<button onclick="inviteToDuel('${f}')">1v1</button>` : ''}
-                            </div>
-                        `;
-                    }
-                    list.innerHTML = html;
-                }
-            });
-        }
+  drawSnake(snake,"#0ff");
+  if(mode==="1v1") drawSnake(enemy,"#f05");
 
-        async function acceptFriend(name) {
-            await db.ref(`friends/${currentPlayer.toLowerCase()}/${name.toLowerCase()}`).set(true);
-            await db.ref(`friends/${name.toLowerCase()}/${currentPlayer.toLowerCase()}`).set(true);
-            await db.ref(`requests/${currentPlayer.toLowerCase()}/${name.toLowerCase()}`).remove();
-        }
+  setTimeout(loop,90);
+}
 
-        async function sendFriendRequest(target) {
-            if (!currentPlayer) {
-                const ni = document.getElementById("playerName").value.trim();
-                if (ni.length < 2) { alert("Enter your name first!"); return; }
-                currentPlayer = ni;
-            }
-            if(target.toLowerCase() === currentPlayer.toLowerCase()) return;
-            await db.ref(`requests/${target.toLowerCase()}/${currentPlayer.toLowerCase()}`).set({time: Date.now()});
-            alert("Beef sent to " + target);
-        }
+/* ================= END ================= */
+function endGame(win){
+  running=false;
+  resultPanel.style.display="block";
+  resultText.innerText=win
+    ? winRoasts[Math.floor(Math.random()*winRoasts.length)]
+    : loseRoasts[Math.floor(Math.random()*loseRoasts.length)];
+  scoreText.innerText=`${me}: ${score} | ${friend}: ${escore}`;
+}
+function rematch(){startGame();}
 
-        // --- 1v1 DUEL LOGIC ---
-        function listenForDuels() {
-            db.ref(`duels_invite/${currentPlayer.toLowerCase()}`).on('value', snap => {
-                const data = snap.val();
-                if(data && data.status === "pending") {
-                    lastOpponent = data.from;
-                    document.getElementById("duel-invite-text").innerText = `1v1 CHALLENGE: ${data.from.toUpperCase()}`;
-                    document.getElementById("duel-invite-popup").style.display = "block";
-                }
-            });
-        }
+/* ================= DRAW ================= */
+function move(s,d){
+  let h=s[0];
+  s.unshift({x:(h.x+d.x+600)%600,y:(h.y+d.y+400)%400});
+  s.pop();
+}
+function draw(o,c){ctx.fillStyle=c;ctx.fillRect(o.x,o.y,18,18);}
+function drawSnake(s,c){s.forEach(p=>draw(p,c));}
+function hit(a,b){return a.x===b.x && a.y===b.y;}
+function collide(h,s){return s.some(p=>p!==s[0]&&hit(h,p));}
 
-        async function inviteToDuel(target) {
-            lastOpponent = target;
-            const roomId = `room_${Math.min(currentPlayer.length, target.length)}_${Date.now()}`;
-            await db.ref(`duels_invite/${target.toLowerCase()}`).set({
-                from: currentPlayer,
-                room: roomId,
-                status: "pending"
-            });
-            alert("Waiting for " + target + "...");
-            
-            // Watch for acceptance
-            db.ref(`duels_invite/${target.toLowerCase()}/status`).on('value', snap => {
-                if(snap.val() === "accepted") {
-                    startDuel(roomId, true, target);
-                }
-            });
-        }
+/* ================= SHARE ================= */
+function share(){
+  window.open("https://wa.me/?text="+encodeURIComponent(
+    `🐍 Snake 1v1 Result\n${me}: ${score}\n${friend}: ${escore}`
+  ));
+}
 
-        async function respondDuel(accept) {
-            document.getElementById("duel-invite-popup").style.display = "none";
-            const snap = await db.ref(`duels_invite/${currentPlayer.toLowerCase()}`).get();
-            const data = snap.val();
-            if(accept) {
-                await db.ref(`duels_invite/${currentPlayer.toLowerCase()}`).update({status: "accepted"});
-                startDuel(data.room, false, data.from);
-            } else {
-                await db.ref(`duels_invite/${currentPlayer.toLowerCase()}`).remove();
-            }
-        }
-
-        function startDuel(roomId, host, opponentName) {
-            isDuel = true;
-            duelRoomId = roomId;
-            isHost = host;
-            lastOpponent = opponentName;
-            gameRunning = true;
-            
-            document.getElementById("start-screen").style.display = "none";
-            document.getElementById("settings-modal").style.display = "none";
-            document.getElementById("p2ScoreWrap").style.display = "inline";
-            document.getElementById("wr-box").style.display = "none";
-            
-            // Reset snakes
-            snake = [{x: 600, y: 300}, {x: 620, y: 300}, {x: 640, y: 300}];
-            snake2 = [{x: 100, y: 300}, {x: 80, y: 300}, {x: 60, y: 300}];
-            dx = -20; dx2 = 20; dy = 0; dy2 = 0;
-            totalScore = 0; p2Score = 0;
-
-            if(isHost) {
-                createFood();
-                updateDuelState();
-            }
-
-            // Listen for changes
-            db.ref(`duel_rooms/${roomId}`).on('value', snap => {
-                const val = snap.val();
-                if(!val) return;
-                if(!isHost) {
-                    snake = val.p1Body;
-                    snake2 = val.p2Body;
-                    foodX = val.foodX;
-                    foodY = val.foodY;
-                    totalScore = val.p1Score;
-                    p2Score = val.p2Score;
-                } else {
-                    snake2 = val.p2Body;
-                    p2Score = val.p2Score;
-                }
-                
-                if(val.gameOver) {
-                    endDuel(val.winner);
-                }
-            });
-
-            gameLoop();
-        }
-
-        function updateDuelState() {
-            if(!isDuel || !gameRunning) return;
-            const update = isHost ? {
-                p1Body: snake,
-                foodX, foodY,
-                p1Score: totalScore
-            } : {
-                p2Body: snake2,
-                p2Score: p2Score
-            };
-            db.ref(`duel_rooms/${duelRoomId}`).update(update);
-        }
-
-        // --- CORE GAMEPLAY ---
-        function attemptStart() {
-            const name = document.getElementById("playerName").value.trim();
-            if (name.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
-            currentPlayer = name;
-            listenForDuels();
-            updateMyStatus();
-            document.getElementById("start-screen").style.display = "none";
-            document.getElementById("toxic-ui").style.display = "flex";
-            gameRunning = true;
-            createFood();
-            if(musicEnabled) document.getElementById("bgMusic").play();
-            gameLoop();
-        }
-
-        function createFood() {
-            foodX = Math.floor(Math.random() * 39) * 20;
-            foodY = Math.floor(Math.random() * 29) * 20;
-            if(isDuel) updateDuelState();
-        }
-
-        function gameLoop() {
-            if (!gameRunning || isPaused) return;
-            let speed = isDuel ? 70 : (isRage ? 45 : Math.max(55, 150 - (totalScore/3)));
-
-            setTimeout(() => {
-                if(isDuel) {
-                    moveDuelSnakes();
-                } else {
-                    moveSoloSnake();
-                }
-                draw();
-                if(gameRunning) gameLoop();
-            }, speed);
-        }
-
-        function moveSoloSnake() {
-            dx = nextDir.dx; dy = nextDir.dy;
-            let nextX = snake[0].x + dx;
-            let nextY = snake[0].y + dy;
-            
-            if(nextX < 0) nextX = 780; else if(nextX >= 800) nextX = 0;
-            if(nextY < 0) nextY = 580; else if(nextY >= 600) nextY = 0;
-
-            if (snake.some(p => p.x === nextX && p.y === nextY)) { handleGameOver(); return; }
-
-            const head = {x: nextX, y: nextY};
-            snake.unshift(head);
-            if (head.x === foodX && head.y === foodY) {
-                totalScore += 10; toxicity = Math.max(0, toxicity - 40);
-                if(sfxEnabled) playSound("eatSound");
-                createFood();
-            } else { snake.pop(); }
-            
-            toxicity = isRage ? toxicity : Math.min(100, toxicity + 0.1); 
-            isRage = (toxicity >= 100);
-        }
-
-        function moveDuelSnakes() {
-            // Local movement logic
-            if(isHost) {
-                dx = nextDir.dx; dy = nextDir.dy;
-                let h1 = {x: snake[0].x + dx, y: snake[0].y + dy};
-                if(h1.x < 0) h1.x = 780; else if(h1.x >= 800) h1.x = 0;
-                if(h1.y < 0) h1.y = 580; else if(h1.y >= 600) h1.y = 0;
-                
-                // Collision with body or P2
-                if(snake.some(p => p.x === h1.x && p.y === h1.y) || snake2.some(p => p.x === h1.x && p.y === h1.y)) {
-                    db.ref(`duel_rooms/${duelRoomId}`).update({gameOver: true, winner: lastOpponent});
-                    return;
-                }
-
-                snake.unshift(h1);
-                if(h1.x === foodX && h1.y === foodY) {
-                    totalScore += 10; createFood(); playSound("eatSound");
-                    chatMsg = "GET REKT!"; chatTimer = 20;
-                } else { snake.pop(); }
-            } else {
-                dx2 = nextDir.dx; dy2 = nextDir.dy;
-                let h2 = {x: snake2[0].x + dx2, y: snake2[0].y + dy2};
-                if(h2.x < 0) h2.x = 780; else if(h2.x >= 800) h2.x = 0;
-                if(h2.y < 0) h2.y = 580; else if(h2.y >= 600) h2.y = 0;
-
-                if(snake2.some(p => p.x === h2.x && p.y === h2.y) || snake.some(p => p.x === h2.x && p.y === h2.y)) {
-                    db.ref(`duel_rooms/${duelRoomId}`).update({gameOver: true, winner: lastOpponent});
-                    return;
-                }
-
-                snake2.unshift(h2);
-                if(h2.x === foodX && h2.y === foodY) {
-                    p2Score += 10; playSound("eatSound");
-                    chatMsg2 = "EASY WORK!"; chatTimer2 = 20;
-                } else { snake2.pop(); }
-            }
-            updateDuelState();
-        }
-
-        function draw() {
-            ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
-            
-            // Food
-            ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
-            ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
-
-            // P1
-            snake.forEach((p, i) => {
-                ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
-                ctx.fillRect(p.x, p.y, 18, 18);
-            });
-
-            // P2 (If duel)
-            if(isDuel) {
-                snake2.forEach((p, i) => {
-                    ctx.fillStyle = (i === 0 ? "#ff0055" : "#ff8800");
-                    ctx.fillRect(p.x, p.y, 18, 18);
-                });
-                document.getElementById("p2ScoreVal").innerText = p2Score;
-            }
-
-            // Roasts
-            if(chatTimer > 0) {
-                ctx.fillStyle = "white"; ctx.fillText(chatMsg, snake[0].x, snake[0].y - 10);
-                chatTimer--;
-            }
-            if(isDuel && chatTimer2 > 0) {
-                ctx.fillStyle = "white"; ctx.fillText(chatMsg2, snake2[0].x, snake2[0].y - 10);
-                chatTimer2--;
-            }
-
-            document.getElementById("scoreVal").innerText = totalScore;
-            document.getElementById("toxic-bar").style.height = toxicity + "%";
-        }
-
-        function endDuel(winner) {
-            gameRunning = false;
-            const isMeWinner = winner.toLowerCase() === currentPlayer.toLowerCase();
-            document.getElementById("over-title").innerText = isMeWinner ? "VICTORY" : "DEFEAT";
-            document.getElementById("over-roast").innerText = isMeWinner ? "U just humbled them!" : "Go back to tutorial mode.";
-            document.getElementById("over-score").innerText = `FINAL: ${totalScore} VS ${p2Score}`;
-            document.getElementById("rematchBtn").style.display = "inline-block";
-            document.getElementById("game-over-screen").style.display = "block";
-            
-            // Cleanup room
-            if(isHost) db.ref(`duel_rooms/${duelRoomId}`).remove();
-        }
-
-        async function handleGameOver() {
-            gameRunning = false;
-            playSound("deathSound");
-            const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
-            if(totalScore > localHigh) {
-                finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
-                localStorage.setItem("snakeHighScore", totalScore);
-            } else {
-                finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
-            }
-            db.ref(`scores/${currentPlayer.toLowerCase()}`).set({name: currentPlayer, score: totalScore});
-            document.getElementById("over-roast").innerText = finalRoastMessage;
-            document.getElementById("over-score").innerText = "SCORE: " + totalScore;
-            document.getElementById("game-over-screen").style.display = "block";
-        }
-
-        function shareToWhatsApp() {
-            let msg = isDuel ? 
-                `🐍 I just played a 1v1 on The Snake! Result: ${totalScore} - ${p2Score}.` :
-                `🐍 I scored ${totalScore} in Solo! Roast: ${finalRoastMessage}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg + "\nPlay here: " + window.location.href)}`);
-        }
-
-        // --- UTILS ---
-        function playSound(id) { if(sfxEnabled) { const s = document.getElementById(id); s.currentTime=0; s.play(); } }
-        
-        function toggleMusic() {
-            musicEnabled = !musicEnabled;
-            const b = document.getElementById("bgMusic");
-            musicEnabled ? b.play() : b.pause();
-            document.getElementById("musicBtn").classList.toggle("off", !musicEnabled);
-        }
-
-        function toggleSFX() {
-            sfxEnabled = !sfxEnabled;
-            document.getElementById("sfxBtn").classList.toggle("off", !sfxEnabled);
-        }
-
-        function togglePause() { 
-            if(!gameRunning || isDuel) return;
-            isPaused = !isPaused; 
-            document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
-            if(!isPaused) gameLoop();
-        }
-
-        async function fetchGlobalHigh() {
-            db.ref("scores").orderByChild("score").limitToLast(1).on('value', snap => {
-                const data = snap.val();
-                if(data) {
-                    const key = Object.keys(data)[0];
-                    globalBestScore = data[key].score;
-                    globalBestName = data[key].name;
-                    document.getElementById("highScoreVal").innerText = globalBestScore;
-                    document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
-                }
-            });
-        }
-
-        async function showLeaderboard() {
-            document.getElementById("leaderboard-screen").style.display = "block";
-            const list = document.getElementById("leaderboard-list");
-            list.innerHTML = "Syncing Records...";
-            db.ref("scores").once('value', snap => {
-                const data = snap.val();
-                if (data) {
-                    const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                    list.innerHTML = sorted.map((s, i) => `
-                        <div class="lb-item" onclick="sendFriendRequest('${s.name}')">
-                            <span>${i+1}. ${s.name} ${i===0?'👑':''}</span>
-                            <span>${s.score}</span>
-                        </div>
-                    `).join('');
-                }
-            });
-        }
-
-        function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
-
-        document.addEventListener("keydown", e => {
-            if(e.keyCode === 80) togglePause();
-            if(isPaused) return;
-            const key = e.keyCode;
-            if((key === 37 || key === 65) && dx === 0) nextDir = {dx: -20, dy: 0};
-            if((key === 38 || key === 87) && dy === 0) nextDir = {dx: 0, dy: -20};
-            if((key === 39 || key === 68) && dx === 0) nextDir = {dx: 20, dy: 0};
-            if((key === 40 || key === 83) && dy === 0) nextDir = {dx: 0, dy: 20};
-        });
-    </script>
+/* ================= CONTROLS ================= */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")dir={x:0,y:-20};
+  if(e.key==="ArrowDown")dir={x:0,y:20};
+  if(e.key==="ArrowLeft")dir={x:-20,y:0};
+  if(e.key==="ArrowRight")dir={x:20,y:0};
+});
+</script>
 </body>
 </html>
-
-
 

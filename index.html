@@ -11,6 +11,7 @@
              min-height: 100vh; margin: 0; color: #00f2ff;
              font-family: 'Courier New', Courier, monospace;
              overflow: hidden; user-select: none;
+             transition: background-color 1s ease;
          }
          #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen {
              position: absolute; background: rgba(15, 5, 36, 0.98);
@@ -18,86 +19,44 @@
              z-index: 100; box-shadow: 0 0 50px #00f2ff;
          }
          #pause-overlay, #leaderboard-screen, #game-over-screen { display: none; }
-         #leaderboard-screen {
-             width: 380px;
-             max-height: 80vh;
-             overflow-y: auto;
-         }
-          .credits {
-             position: absolute; bottom: 10px; right: 15px;
-             font-size: 12px; color: #00f2ff; opacity: 0.7;
-             text-shadow: 0 0 5px #00f2ff;
-         }
-          .main-container {
-             position: relative;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-         }
+         #leaderboard-screen { width: 380px; max-height: 80vh; overflow-y: auto; }
+          .credits { position: absolute; bottom: 10px; right: 15px; font-size: 12px; color: #00f2ff; opacity: 0.7; }
+          .main-container { position: relative; display: flex; align-items: center; justify-content: center; }
+          
           .toxic-wrapper {
-             position: absolute;
-             right: -30px;
-              display: none;
-              flex-direction: column;
-             align-items: center;
-         }
-          .toxic-label {
-             font-size: 10px; font-weight: bold; color: #ff0055;
-             margin-bottom: 5px; text-transform: uppercase;
-             writing-mode: vertical-rl; transform: rotate(180deg);
-         }
+              position: absolute; right: -40px; display: none; flex-direction: column; align-items: center;
+          }
           .toxic-container-vertical {
-             width: 10px; height: 300px;
-              background: #1a1a3a; border: 2px solid #00f2ff;
-             border-radius: 10px; position: relative;
-             display: flex; flex-direction: column; justify-content: flex-end;
-             overflow: hidden;
-         }
-         #toxic-bar {
-             width: 100%; height: 0%;
-             background: linear-gradient(0deg, #00f2ff, #ff0055);
-             transition: height 0.3s ease;
-         }
-          input {
-             background: #16213e; border: 2px solid #00f2ff; color: white;
-             padding: 12px; margin-bottom: 25px; width: 220px;
-             text-align: center; font-size: 18px; outline: none;
-             display: block; margin: 20px auto;
-         }
-          button {
-             background: #ff0055; color: white; border: none;
-             padding: 15px 35px; font-weight: bold; font-size: 20px;
-             cursor: pointer; text-transform: uppercase; margin: 5px;
-         }
+              width: 12px; height: 300px; background: #1a1a3a; border: 2px solid #00f2ff;
+              border-radius: 10px; position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+              overflow: hidden;
+          }
+          #toxic-bar { width: 100%; height: 0%; background: linear-gradient(0deg, #00f2ff, #ff0055); transition: height 0.3s; }
+
+          input { background: #16213e; border: 2px solid #00f2ff; color: white; padding: 12px; width: 220px; text-align: center; font-size: 18px; outline: none; margin: 20px auto; display: block; }
+          button { background: #ff0055; color: white; border: none; padding: 15px 35px; font-weight: bold; font-size: 20px; cursor: pointer; text-transform: uppercase; margin: 5px; }
           .whatsapp-btn { background: #25D366; }
+          
           .stats-bar {
-             display: flex; justify-content: space-between;
-             width: 800px; padding: 10px 20px; font-size: 18px;
-             background: rgba(0, 242, 255, 0.1); margin-bottom: 10px;
-         }
+              display: flex; justify-content: space-between; width: 800px; padding: 10px 20px; font-size: 18px;
+              background: rgba(0, 242, 255, 0.1); border: 2px solid rgba(0, 242, 255, 0.3); margin-bottom: 10px;
+          }
 
-         /* CIRCULAR AUDIO CONTROLS */
-         .audio-settings {
-             position: fixed; top: 20px; right: 20px;
-             display: flex; flex-direction: column; gap: 15px; z-index: 1000;
-         }
-         .circle-btn {
-             width: 50px; height: 50px; border-radius: 50%;
-             background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff;
-             display: flex; align-items: center; justify-content: center;
-             cursor: pointer; transition: all 0.3s; box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
-         }
-         .circle-btn svg { width: 24px; height: 24px; fill: #00f2ff; }
-         .circle-btn.muted {
-             border-color: #ff0055; background: rgba(255, 0, 85, 0.1);
-         }
-         .circle-btn.muted svg { fill: #ff0055; }
+          .audio-settings { position: fixed; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
+          .circle-btn { width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+          .circle-btn svg { width: 24px; height: 24px; fill: #00f2ff; }
+          .circle-btn.muted { border-color: #ff0055; }
+          .circle-btn.muted svg { fill: #ff0055; }
 
-         canvas { background-color: #0f0524; border: 4px solid #00f2ff; }
-          #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
-         .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
-         .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
-         .mvp-crown { color: gold; font-size: 18px; text-shadow: 0 0 10px gold; }
+          canvas { background-color: #0f0524; border: 4px solid #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+          .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
+          
+          /* Map Notification */
+          #map-notifier {
+              position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+              font-size: 40px; font-weight: bold; color: white; text-shadow: 0 0 20px #00f2ff;
+              pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 200;
+          }
      </style>
 </head>
 <body>
@@ -106,67 +65,92 @@
      <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
      <audio id="deathSound" src="death.mp3" preload="auto"></audio>
      <audio id="rageSound" loop src="rage.mp3" preload="auto"></audio>
+     <audio id="levelUpSound" src="levelup.mp3" preload="auto"></audio>
+     <audio id="mapChangeSound" src="mapchange.mp3" preload="auto"></audio>
      
+     <div id="map-notifier">NEON CITY</div>
+
      <div class="audio-settings">
-         <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
-            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-         </div>
-         <div id="sfxBtn" class="circle-btn" onclick="toggleSFX()">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-         </div>
+          <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
+             <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div id="sfxBtn" class="circle-btn" onclick="toggleSFX()">
+             <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </div>
      </div>
 
      <div id="start-screen">
-         <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
-         <input type="text" id="playerName" placeholder="Name" maxlength="12">
-         <button onclick="attemptStart()">A Quick Start ⚡</button>
-         <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
-         <div class="credits">Created by Saboor 🍭</div>
+          <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
+          <p style="color: #00f2ff;">Level up every 100 points!</p>
+          <input type="text" id="playerName" placeholder="Enter Name" maxlength="12">
+          <button onclick="attemptStart()">START MISSION ⚡</button>
+          <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
+          <div class="credits">Created by Saboor 🍭</div>
      </div>
 
      <div id="leaderboard-screen">
-         <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
-         <div id="leaderboard-list">Loading players...</div>
-         <button onclick="closeLeaderboard()">CLOSE</button>
+          <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
+          <div id="leaderboard-list">Loading...</div>
+          <button onclick="closeLeaderboard()">CLOSE</button>
      </div>
 
      <div id="game-over-screen">
-         <h1 id="over-title">GAME OVER</h1>
-         <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
-         <h2 id="over-score">SCORE: 0</h2>
-         <button onclick="location.reload()">TRY AGAIN</button>
-         <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
+          <h1 id="over-title">GAME OVER</h1>
+          <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
+          <h2 id="over-score">SCORE: 0</h2>
+          <button onclick="location.reload()">TRY AGAIN</button>
+          <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE 📲</button>
      </div>
 
      <div id="pause-overlay">
-         <h1>PAUSED</h1>
-         <button onclick="togglePause()">RESUME (P)</button>
+          <h1>PAUSED</h1>
+          <button onclick="togglePause()">RESUME (P)</button>
      </div>
 
      <div class="stats-bar">
-         <div>SCORE: <span id="scoreVal">0</span></div>
-         <div style="color: #ff0055;">WR: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
+          <div>LVL: <span id="levelVal" style="color: gold;">1</span></div>
+          <div>SCORE: <span id="scoreVal">0</span></div>
+          <div style="color: #ff0055;">WR: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
      </div>
 
      <div class="main-container">
-         <canvas id="gameCanvas" width="800" height="600"></canvas>
-         <div class="toxic-wrapper" id="toxic-ui">
-             <div class="toxic-label">TOXICITY</div>
-             <div class="toxic-container-vertical">
-                 <div id="toxic-bar"></div>
-             </div>
-         </div>
+          <canvas id="gameCanvas" width="800" height="600"></canvas>
+          <div class="toxic-wrapper" id="toxic-ui">
+              <div id="toxic-bar"></div>
+          </div>
      </div>
 
      <script>
-         const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/";
-         const canvas = document.getElementById("gameCanvas");
-         const ctx = canvas.getContext("2d");
+          const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/";
+          const canvas = document.getElementById("gameCanvas");
+          const ctx = canvas.getContext("2d");
 
-         let musicEnabled = true;
-         let sfxEnabled = true;
+          let musicEnabled = true;
+          let sfxEnabled = true;
+          
+          // Game State
+          let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
+          let hurdles = [];
+          let dx = 20, dy = 0, totalScore = 0, currentLevel = 1, gameRunning = false, isPaused = false;
+          let foodX, foodY, toxicity = 0, isRage = false;
+          let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
+          let finalRoastMessage = "";
+          let globalBestScore = 0;
+          let globalBestName = "NONE";
+          let nextDirection = { dx: 20, dy: 0 };
+          let isRageSoundPlaying = false;
 
-         const startRoasts = [
+          // Map/Themes Configuration
+          const themes = [
+              { name: "NEON CITY", bg: "#0f0524", snake: "#00f2ff", body: "#7000ff", hurdle: "#333" },
+              { name: "EMERALD JUNGLE", bg: "#02210b", snake: "#2ecc71", body: "#27ae60", hurdle: "#3e2723" },
+              { name: "BLOOD MOON", bg: "#210202", snake: "#ff4d4d", body: "#800000", hurdle: "#444" },
+              { name: "DEEP OCEAN", bg: "#021a21", snake: "#00d4ff", body: "#005b96", hurdle: "#1a237e" },
+              { name: "CYBER VOID", bg: "#000000", snake: "#f1c40f", body: "#e67e22", hurdle: "#ffffff" }
+          ];
+          let currentTheme = themes[0];
+
+          const startRoasts = [
              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
              "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
              "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
@@ -215,295 +199,254 @@
               "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
          ];
 
-         let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
-         let dx = 20, dy = 0, totalScore = 0, gameRunning = false, isPaused = false;
-         let foodX, foodY, toxicity = 0, isRage = false;
-         let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
-         let finalRoastMessage = "";
-         let globalBestScore = 0;
-         let globalBestName = "NONE";
-         let nextDirection = { dx: 20, dy: 0 };
-         let audioCtx;
-         let isRageSoundPlaying = false;
 
-         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+          function toggleMusic() {
+              musicEnabled = !musicEnabled;
+              const music = document.getElementById("bgMusic");
+              const btn = document.getElementById("musicBtn");
+              musicEnabled ? (btn.classList.remove("muted"), (gameRunning && !isPaused && music.play())) : (btn.classList.add("muted"), music.pause());
+          }
 
-         function toggleMusic() {
-             musicEnabled = !musicEnabled;
-             const music = document.getElementById("bgMusic");
-             const btn = document.getElementById("musicBtn");
-             if (musicEnabled) {
-                 btn.classList.remove("muted");
-                 if (gameRunning && !isPaused && !isRage) music.play();
-             } else {
-                 btn.classList.add("muted");
-                 music.pause();
-             }
-         }
+          function toggleSFX() {
+              sfxEnabled = !sfxEnabled;
+              const btn = document.getElementById("sfxBtn");
+              sfxEnabled ? btn.classList.remove("muted") : btn.classList.add("muted");
+          }
 
-         function toggleSFX() {
-             sfxEnabled = !sfxEnabled;
-             const btn = document.getElementById("sfxBtn");
-             sfxEnabled ? btn.classList.remove("muted") : btn.classList.add("muted");
-         }
-
-         async function fetchGlobalHigh() {
-             try {
-                 const response = await fetch(DB_URL + "scores.json");
-                 const data = await response.json();
-                 if (data) {
-                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                     const top = sorted[0];
-                     globalBestScore = top.score || 0;
-                     globalBestName = top.name || "NONE";
-                     document.getElementById("highScoreVal").innerText = globalBestScore;
-                     document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
-                 }
-             } catch(e) {}
-         }
-
-         async function saveScore(name, score) {
-             if (score <= 0) return;
-             const playerId = name.toLowerCase().trim();
-              try {
-                 const check = await fetch(`${DB_URL}scores/${playerId}.json`);
-                 const existing = await check.json();
-                 if (!existing || score > existing.score) {
-                     await fetch(`${DB_URL}scores/${playerId}.json`, {
-                         method: 'PUT',
-                         body: JSON.stringify({ name: name, score: score, date: new Date().toISOString() })
-                     });
-                 }
-             } catch(e) { console.error("Save Error"); }
-         }
-
-         async function showLeaderboard() {
-             document.getElementById("leaderboard-screen").style.display = "block";
-             const list = document.getElementById("leaderboard-list");
-             list.innerHTML = "Fetching Hall of Fame...";
-             try {
-                 const response = await fetch(DB_URL + "scores.json");
-                 const data = await response.json();
-                 if (data) {
-                     const sorted = Object.values(data).sort((a,b) => b.score - a.score);
-                     let html = `<div class="lb-header">TOP 5 LEGENDS</div>`;
-                     html += sorted.slice(0, 5).map((s, i) => {
-                         const crown = (i === 0) ? `<span class="mvp-crown"> 👑 MVP</span>` : '';
-                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
-                     }).join('');
-                     html += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
-                     html += sorted.map((s, i) => {
-                         const crown = (i === 0) ? ` 👑` : '';
-                         return `<div class="lb-item"><span>${i+1}. ${s.name}${crown}</span><span>${s.score}</span></div>`;
-                     }).join('');
-                     list.innerHTML = html;
-                 } else { list.innerHTML = "No records found."; }
-             } catch(e) { list.innerHTML = "Failed to connect to Saboor's Server."; }
-         }
-
-         function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
-
-         function attemptStart() {
-             const nameInput = document.getElementById("playerName").value.trim();
-             if (nameInput === "saboor07") { resetLeaderboard(); return; }
-             if (nameInput.length < 2) {
-                  alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]);
-                  return;
+          function playSound(id) {
+              if (sfxEnabled) {
+                  const s = document.getElementById(id);
+                  s.currentTime = 0;
+                  s.play().catch(e => {});
               }
-             currentPlayer = nameInput;
-             initAudio();
-             
-             const music = document.getElementById("bgMusic");
-             music.volume = 0.15;
-             if (musicEnabled) music.play().catch(e => console.log("Audio play failed: ", e));
-             
-             document.getElementById("start-screen").style.display = "none";
-             document.getElementById("toxic-ui").style.display = "flex";
-             gameRunning = true;
-             createFood();
-             gameLoop();
-         }
+          }
 
-         function createFood() {
-             foodX = Math.floor(Math.random() * 39) * 20;
-             foodY = Math.floor(Math.random() * 29) * 20;
-             wasNear = false;
-         }
+          async function fetchGlobalHigh() {
+              try {
+                  const response = await fetch(DB_URL + "scores.json");
+                  const data = await response.json();
+                  if (data) {
+                      const sorted = Object.values(data).sort((a,b) => b.score - a.score);
+                      globalBestScore = sorted[0].score;
+                      globalBestName = sorted[0].name;
+                      document.getElementById("highScoreVal").innerText = globalBestScore;
+                      document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
+                  }
+              } catch(e) {}
+          }
 
-         function gameLoop() {
-             if (!gameRunning || isPaused) return;
-             let speed = isRage ? 45 : Math.max(55, 150 - (totalScore/3));
+          function createHurdle() {
+              let hX, hY;
+              // Ensure hurdle doesn't spawn on snake or food
+              do {
+                  hX = Math.floor(Math.random() * 39) * 20;
+                  hY = Math.floor(Math.random() * 29) * 20;
+              } while (
+                  snake.some(p => p.x === hX && p.y === hY) || 
+                  (hX === foodX && hY === foodY)
+              );
+              hurdles.push({x: hX, y: hY});
+          }
 
-             setTimeout(() => {
-                 dx = nextDirection.dx;
-                 dy = nextDirection.dy;
-                 ctx.fillStyle = "#0f0524"; ctx.fillRect(0, 0, 800, 600);
-                 
-                 // WALL WRAPPING LOGIC
-                 let nextX = snake[0].x + dx;
-                 let nextY = snake[0].y + dy;
+          function checkLevelUp() {
+              let targetLevel = Math.floor(totalScore / 100) + 1;
+              if (targetLevel > currentLevel) {
+                  currentLevel = targetLevel;
+                  document.getElementById("levelVal").innerText = currentLevel;
+                  
+                  // Add a hurdle every level
+                  createHurdle();
+                  playSound("levelUpSound");
 
-                 if (nextX < 0) nextX = 800 - 20;
-                 else if (nextX >= 800) nextX = 0;
-                 
-                 if (nextY < 0) nextY = 600 - 20;
-                 else if (nextY >= 600) nextY = 0;
+                  // Change Map every 3 levels
+                  if (currentLevel % 3 === 1 && currentLevel > 1) {
+                      changeMap();
+                  }
+              }
+          }
 
-                 let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
+          function changeMap() {
+              let themeIdx = (Math.floor(currentLevel / 3)) % themes.length;
+              currentTheme = themes[themeIdx];
+              
+              // Visual Update
+              document.body.style.backgroundColor = currentTheme.bg;
+              canvas.style.borderColor = currentTheme.snake;
+              
+              const notifier = document.getElementById("map-notifier");
+              notifier.innerText = currentTheme.name;
+              notifier.style.opacity = "1";
+              notifier.style.color = currentTheme.snake;
+              
+              playSound("mapChangeSound");
+              setTimeout(() => notifier.style.opacity = "0", 2000);
+          }
 
-                 if (dist < 35 && (nextX !== foodX || nextY !== foodY)) wasNear = true;
-                 else if (wasNear && dist > 45) {
-                     toxicity = Math.min(100, toxicity + 20);
-                     missCombo++;
-                     if (missCombo >= 2) {
-                         chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)];
-                         chatTimer = 25;
-                     }
-                     wasNear = false;
-                 }
+          function createFood() {
+              do {
+                  foodX = Math.floor(Math.random() * 39) * 20;
+                  foodY = Math.floor(Math.random() * 29) * 20;
+              } while (
+                  snake.some(p => p.x === foodX && p.y === foodY) ||
+                  hurdles.some(h => h.x === foodX && h.y === foodY)
+              );
+              wasNear = false;
+          }
 
-                 isRage = toxicity >= 100;
+          function attemptStart() {
+              const nameInput = document.getElementById("playerName").value.trim();
+              if (nameInput.length < 2) { alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]); return; }
+              currentPlayer = nameInput;
+              
+              const music = document.getElementById("bgMusic");
+              music.volume = 0.15;
+              if (musicEnabled) music.play().catch(e => {});
+              
+              document.getElementById("start-screen").style.display = "none";
+              document.getElementById("toxic-ui").style.display = "flex";
+              gameRunning = true;
+              createFood();
+              gameLoop();
+          }
 
-                 const rageSfx = document.getElementById("rageSound");
-                 const mainMusic = document.getElementById("bgMusic");
+          function gameLoop() {
+              if (!gameRunning || isPaused) return;
+              
+              // Difficulty Speed Formula
+              let speed = isRage ? 40 : Math.max(45, 140 - (currentLevel * 5) - (totalScore % 100 / 5));
 
-                 if (isRage && sfxEnabled) {
-                     if (!isRageSoundPlaying) {
-                         mainMusic.pause();
-                         rageSfx.currentTime = 0;
-                         rageSfx.play();
-                         isRageSoundPlaying = true;
-                     }
-                 } else {
-                     if (isRageSoundPlaying) {
-                         rageSfx.pause();
-                         isRageSoundPlaying = false;
-                         if (musicEnabled && !isPaused) mainMusic.play();
-                     }
-                 }
+              setTimeout(() => {
+                  dx = nextDirection.dx; dy = nextDirection.dy;
+                  ctx.fillStyle = currentTheme.bg; ctx.fillRect(0, 0, 800, 600);
+                  
+                  let nextX = snake[0].x + dx;
+                  let nextY = snake[0].y + dy;
 
-                 document.getElementById("toxic-bar").style.height = toxicity + "%";
-                 ctx.fillStyle = isRage ? "#ff0055" : "#00f2ff";
-                 ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
+                  // Wrapping
+                  if (nextX < 0) nextX = 780; else if (nextX >= 800) nextX = 0;
+                  if (nextY < 0) nextY = 580; else if (nextY >= 600) nextY = 0;
 
-                 const head = { x: nextX, y: nextY };
-                 
-                 // Collision with body still kills you
-                 if (snake.some(p => p.x === head.x && p.y === head.y)) {
-                     handleGameOver(); return;
-                 }
+                  const head = { x: nextX, y: nextY };
 
-                 snake.unshift(head);
+                  // Collision Check: Body or Hurdles
+                  if (snake.some(p => p.x === head.x && p.y === head.y) || 
+                      hurdles.some(h => h.x === head.x && h.y === head.y)) {
+                      handleGameOver(); return;
+                  }
 
-                 if (head.x === foodX && head.y === foodY) {
-                     totalScore += 10;
-                     toxicity = Math.max(0, toxicity - 40);
-                     missCombo = 0;
+                  // Proximity Tracking for Toxicity
+                  let dist = Math.sqrt(Math.pow(nextX - foodX, 2) + Math.pow(nextY - foodY, 2));
+                  if (dist < 30) wasNear = true;
+                  else if (wasNear && dist > 50) {
+                      toxicity = Math.min(100, toxicity + 25);
+                      missCombo++;
+                      if (missCombo >= 2) { chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)]; chatTimer = 20; }
+                      wasNear = false;
+                  }
 
-                     if (sfxEnabled) {
-                        const eatSfx = document.getElementById("eatSound");
-                        eatSfx.currentTime = 0;
-                        eatSfx.play();
-                     }
+                  isRage = toxicity >= 100;
+                  updateAudioStates();
 
-                     document.getElementById("scoreVal").innerText = totalScore;
-                     fetchGlobalHigh();
-                     createFood();
-                 } else { snake.pop(); }
+                  // Draw Food
+                  ctx.fillStyle = isRage ? "#ff0055" : currentTheme.snake;
+                  ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
-                 snake.forEach((p, i) => {
-                     ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? "#00f2ff" : "#7000ff");
-                     ctx.fillRect(p.x, p.y, 18, 18);
-                     if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
-                         ctx.fillStyle = "gold"; ctx.font = "20px Arial"; ctx.textAlign = "center";
-                         ctx.fillText("👑", p.x + 10, p.y - 6);
-                     }
-                 });
+                  // Draw Hurdles
+                  ctx.fillStyle = currentTheme.hurdle;
+                  hurdles.forEach(h => {
+                      ctx.fillRect(h.x, h.y, 20, 20);
+                      ctx.strokeStyle = currentTheme.snake;
+                      ctx.strokeRect(h.x+2, h.y+2, 16, 16);
+                  });
 
-                 if (chatTimer > 0) {
-                     ctx.fillStyle = "white"; ctx.font = "14px Courier New"; ctx.textAlign = "center";
-                     ctx.fillText(chatMsg, snake[0].x + 10, snake[0].y - 15);
-                     chatTimer--;
-                 }
-                 gameLoop();
-             }, speed);
-         }
+                  snake.unshift(head);
 
-         async function handleGameOver() {
-             document.getElementById("bgMusic").pause();
-             document.getElementById("rageSound").pause();
-             isRageSoundPlaying = false;
-             
-             if (sfxEnabled) {
-                const deathSfx = document.getElementById("deathSound");
-                deathSfx.currentTime = 0;
-                deathSfx.play();
-             }
+                  if (head.x === foodX && head.y === foodY) {
+                      totalScore += 10;
+                      toxicity = Math.max(0, toxicity - 40);
+                      missCombo = 0;
+                      playSound("eatSound");
+                      document.getElementById("scoreVal").innerText = totalScore;
+                      document.getElementById("toxic-bar").style.height = toxicity + "%";
+                      checkLevelUp();
+                      createFood();
+                  } else { snake.pop(); }
 
-             gameRunning = false;
-             const localHigh = parseInt(localStorage.getItem("snakeHighScore") || 0);
-             if (totalScore > localHigh) {
-                 finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
-                 localStorage.setItem("snakeHighScore", totalScore);
-             } else {
-                 finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
-             }
-             await saveScore(currentPlayer, totalScore);
-             document.getElementById("over-roast").innerText = finalRoastMessage;
-             document.getElementById("over-score").innerText = "SCORE: " + totalScore;
-             document.getElementById("game-over-screen").style.display = "block";
-         }
+                  // Draw Snake
+                  snake.forEach((p, i) => {
+                      ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? currentTheme.snake : currentTheme.body);
+                      ctx.fillRect(p.x, p.y, 18, 18);
+                      if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
+                          ctx.fillText("👑", p.x + 5, p.y - 5);
+                      }
+                  });
 
-         function shareToWhatsApp() {
-             const gameLink = window.location.href;
-             let text = "";
-             if (totalScore >= globalBestScore && totalScore > 0) {
-                 text = `👑 I AM THE NEW MVP! 👑\n\nI just broke the Record with a score of ${totalScore} in The Snake!\n\nChallenge me: ${gameLink}`;
-             } else {
-                 text = `🐍 THE SNAKE GAME 🐍\n\nMy Score: ${totalScore}\n\nSystem Roasted Me: "${finalRoastMessage}"\n\nChallenge: ${gameLink}`;
-             }
-             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-         }
+                  if (chatTimer > 0) {
+                      ctx.fillStyle = "white"; ctx.font = "12px Courier";
+                      ctx.fillText(chatMsg, snake[0].x, snake[0].y - 10);
+                      chatTimer--;
+                  }
 
-         function togglePause() {
+                  gameLoop();
+              }, speed);
+          }
+
+          function updateAudioStates() {
+              const rageSfx = document.getElementById("rageSound");
+              const mainMusic = document.getElementById("bgMusic");
+              if (isRage && sfxEnabled && !isRageSoundPlaying) {
+                  mainMusic.pause(); rageSfx.play(); isRageSoundPlaying = true;
+              } else if (!isRage && isRageSoundPlaying) {
+                  rageSfx.pause(); if (musicEnabled) mainMusic.play(); isRageSoundPlaying = false;
+              }
+              document.getElementById("toxic-bar").style.height = toxicity + "%";
+          }
+
+          async function handleGameOver() {
+              gameRunning = false;
+              document.getElementById("bgMusic").pause();
+              document.getElementById("rageSound").pause();
+              playSound("deathSound");
+              
+              finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)];
+              await saveScore(currentPlayer, totalScore);
+              
+              document.getElementById("over-roast").innerText = finalRoastMessage;
+              document.getElementById("over-score").innerText = `SCORE: ${totalScore} | LEVEL: ${currentLevel}`;
+              document.getElementById("game-over-screen").style.display = "block";
+          }
+
+          async function saveScore(name, score) {
+              if (score <= 0) return;
+              try {
+                  await fetch(`${DB_URL}scores/${name.toLowerCase().trim()}.json`, {
+                      method: 'PUT',
+                      body: JSON.stringify({ name: name, score: score, level: currentLevel })
+                  });
+              } catch(e) {}
+          }
+
+          // Controls & Utilities (Keep your existing leaderboard functions)
+          document.addEventListener("keydown", e => {
+              if (document.activeElement.tagName === "INPUT") return;
+              if (e.keyCode === 80) togglePause();
+              if (isPaused || !gameRunning) return;
+              const keys = {37: [-20,0], 38: [0,-20], 39: [20,0], 40: [0,20], 65: [-20,0], 87: [0,-20], 68: [20,0], 83: [0,20]};
+              if (keys[e.keyCode]) {
+                  const [nx, ny] = keys[e.keyCode];
+                  if (nx !== -dx && ny !== -dy) nextDirection = { dx: nx, dy: ny };
+                  e.preventDefault();
+              }
+          });
+
+          function togglePause() {
               if(!gameRunning) return;
               isPaused = !isPaused;
               document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
-              const music = document.getElementById("bgMusic");
-              const rageSfx = document.getElementById("rageSound");
+              if (!isPaused) gameLoop();
+          }
 
-              if (isPaused) {
-                music.pause();
-                rageSfx.pause();
-              } else {
-                if (isRage && sfxEnabled) {
-                    rageSfx.play();
-                } else if (musicEnabled) {
-                    music.play();
-                }
-              }
-              if(!isPaused) gameLoop();
-         }
-
-         async function resetLeaderboard() {
-             if (confirm("NUKE THE WHOLE DATABASE?")) {
-                 await fetch(DB_URL + "scores.json", { method: 'DELETE' });
-                 location.reload();
-             }
-         }
-
-         document.addEventListener("keydown", e => {
-             if (document.activeElement.tagName === "INPUT") return;
-             if ([32, 37, 38, 39, 40, 87, 65, 83, 68].includes(e.keyCode)) e.preventDefault();
-             if (e.keyCode === 80 && gameRunning) togglePause();
-             if (isPaused || !gameRunning) return;
-             if ((e.keyCode === 37 || e.keyCode === 65) && dx === 0) { nextDirection = { dx: -20, dy: 0 }; }
-             if ((e.keyCode === 38 || e.keyCode === 87) && dy === 0) { nextDirection = { dx: 0, dy: -20 }; }
-             if ((e.keyCode === 39 || e.keyCode === 68) && dx === 0) { nextDirection = { dx: 20, dy: 0 }; }
-             if ((e.keyCode === 40 || e.keyCode === 83) && dy === 0) { nextDirection = { dx: 0, dy: 20 }; }
-         });
-
-         window.onload = fetchGlobalHigh;
+          window.onload = fetchGlobalHigh;
      </script>
 </body>
 </html>

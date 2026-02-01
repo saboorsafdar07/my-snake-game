@@ -11,7 +11,7 @@
              min-height: 100vh; margin: 0; color: #00f2ff;
              font-family: 'Courier New', Courier, monospace;
              overflow: hidden; user-select: none;
-             transition: background-color 1s ease;
+             transition: background-color 0.8s ease;
          }
          #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen {
              position: absolute; background: rgba(15, 5, 36, 0.98);
@@ -24,7 +24,7 @@
           .main-container { position: relative; display: flex; align-items: center; justify-content: center; }
           
           .toxic-wrapper {
-              position: absolute; right: -40px; display: none; flex-direction: column; align-items: center;
+              position: absolute; right: -40px; display: flex; flex-direction: column; align-items: center;
           }
           .toxic-container-vertical {
               width: 12px; height: 300px; background: #1a1a3a; border: 2px solid #00f2ff;
@@ -49,10 +49,8 @@
           .circle-btn.muted svg { fill: #ff0055; }
 
           canvas { background-color: #0f0524; border: 4px solid #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
-          #leaderboard-list { list-style: none; padding: 0; text-align: left; margin: 20px 0; font-size: 14px;}
           .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
           .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
-          .mvp-crown { color: gold; font-size: 18px; text-shadow: 0 0 10px gold; }
 
           #map-notifier {
               position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -138,7 +136,7 @@
           let nextDirection = { dx: 20, dy: 0 }, isRageSoundPlaying = false;
 
           const themes = [
-              { name: "NEON CITY", bg: "#0f0524", snake: "#00f2ff", body: "#7000ff", hurdle: "#333" },
+              { name: "NEON CITY", bg: "#0d0221", snake: "#00f2ff", body: "#7000ff", hurdle: "#333" },
               { name: "EMERALD JUNGLE", bg: "#02210b", snake: "#2ecc71", body: "#27ae60", hurdle: "#3e2723" },
               { name: "BLOOD MOON", bg: "#210202", snake: "#ff4d4d", body: "#800000", hurdle: "#444" },
               { name: "DEEP OCEAN", bg: "#021a21", snake: "#00d4ff", body: "#005b96", hurdle: "#1a237e" },
@@ -201,7 +199,7 @@
               musicEnabled ? (document.getElementById("musicBtn").classList.remove("muted"), gameRunning && !isPaused && m.play()) : (document.getElementById("musicBtn").classList.add("muted"), m.pause());
           }
           function toggleSFX() { sfxEnabled = !sfxEnabled; document.getElementById("sfxBtn").classList.toggle("muted", !sfxEnabled); }
-          function playSfx(id) { if(sfxEnabled) { let s = document.getElementById(id); s.currentTime = 0; s.play(); } }
+          function playSfx(id) { if(sfxEnabled) { let s = document.getElementById(id); s.currentTime = 0; s.play().catch(e=>{}); } }
 
           async function fetchGlobalHigh() {
               try {
@@ -235,39 +233,69 @@
           }
           function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
 
-          function createHurdle() {
-              let hX, hY;
-              do {
-                  hX = Math.floor(Math.random() * 38) * 20;
-                  hY = Math.floor(Math.random() * 28) * 20;
-              } while (snake.some(p => Math.abs(p.x - hX) < 40 && Math.abs(p.y - hY) < 40) || (Math.abs(hX - foodX) < 40));
-              // Hurdle is a 40x40 block (4 standard tiles)
-              hurdles.push({x: hX, y: hY});
+          function spawnHurdles(count) {
+              for(let i=0; i<count; i++) {
+                  let hX, hY;
+                  do {
+                      hX = Math.floor(Math.random() * 37) * 20;
+                      hY = Math.floor(Math.random() * 27) * 20;
+                  } while (
+                      snake.some(p => Math.abs(p.x - hX) < 60 && Math.abs(p.y - hY) < 60) || 
+                      (Math.abs(hX - foodX) < 60)
+                  );
+                  hurdles.push({x: hX, y: hY});
+              }
           }
 
           function changeMap() {
-              let idx = (Math.floor(currentLevel / 3)) % themes.length;
+              let idx = (Math.floor((currentLevel-1) / 3)) % themes.length;
               currentTheme = themes[idx];
               document.body.style.backgroundColor = currentTheme.bg;
               canvas.style.borderColor = currentTheme.snake;
+              
+              // RESET HURDLES ON MAP CHANGE
+              hurdles = [];
+              spawnHurdles(3); // Start new map with 3 initial hurdles
+              
               const n = document.getElementById("map-notifier");
               n.innerText = currentTheme.name; n.style.opacity = "1"; n.style.color = currentTheme.snake;
               playSfx("mapChangeSound");
-              setTimeout(() => n.style.opacity = "0", 2000);
+              setTimeout(() => n.style.opacity = "0", 2500);
+          }
+
+          function checkLevelUp() {
+              // Level 1: 50, Level 2: 150 (50+100), Level 3: 300 (150+150)...
+              // Simple Logic: score >= level * (level + 1) * 25
+              let requiredScore = 0;
+              for(let i=1; i<=currentLevel; i++) requiredScore += i * 50;
+
+              if (totalScore >= requiredScore) {
+                  currentLevel++;
+                  document.getElementById("levelVal").innerText = currentLevel;
+                  playSfx("levelUpSound");
+                  
+                  if ((currentLevel - 1) % 3 === 0) {
+                      changeMap();
+                  } else {
+                      spawnHurdles(3); // Add 3 hurdles for normal level up
+                  }
+              }
           }
 
           function createFood() {
               do {
                   foodX = Math.floor(Math.random() * 39) * 20;
                   foodY = Math.floor(Math.random() * 29) * 20;
-              } while (snake.some(p => p.x === foodX && p.y === foodY) || hurdles.some(h => foodX >= h.x && foodX < h.x+40 && foodY >= h.y && foodY < h.y+40));
+              } while (
+                  snake.some(p => p.x === foodX && p.y === foodY) || 
+                  hurdles.some(h => foodX >= h.x && foodX < h.x+40 && foodY >= h.y && foodY < h.y+40)
+              );
               wasNear = false;
           }
 
           function attemptStart() {
               const n = document.getElementById("playerName").value.trim();
-              if (n === "saboor07") { resetDB(); return; }
-              if (n.length < 2) { alert(startRoasts[Math.floor(Math.random()*startRoasts.length)]); return; }
+              if (n.length < 2) { alert("Enter a name, you walnut!"); return; }
               currentPlayer = n;
               document.getElementById("bgMusic").volume = 0.15;
               if (musicEnabled) document.getElementById("bgMusic").play().catch(e=>{});
@@ -278,7 +306,7 @@
 
           function gameLoop() {
               if (!gameRunning || isPaused) return;
-              let speed = isRage ? 45 : Math.max(50, 150 - (totalScore/3) - (currentLevel * 2));
+              let speed = isRage ? 45 : Math.max(45, 140 - (totalScore/4));
               setTimeout(() => {
                   dx = nextDirection.dx; dy = nextDirection.dy;
                   ctx.fillStyle = currentTheme.bg; ctx.fillRect(0, 0, 800, 600);
@@ -287,14 +315,12 @@
                   if (nX < 0) nX = 780; else if (nX >= 800) nX = 0;
                   if (nY < 0) nY = 580; else if (nY >= 600) nY = 0;
 
-                  // Collision Check
                   const hitHurdle = hurdles.some(h => nX >= h.x && nX < h.x + 40 && nY >= h.y && nY < h.y + 40);
                   if (snake.some(p => p.x === nX && p.y === nY) || hitHurdle) { handleGameOver(); return; }
 
-                  // Toxicity logic
                   let d = Math.sqrt(Math.pow(nX - foodX, 2) + Math.pow(nY - foodY, 2));
                   if (d < 35) wasNear = true;
-                  else if (wasNear && d > 50) {
+                  else if (wasNear && d > 60) {
                       toxicity = Math.min(100, toxicity + 20); missCombo++;
                       if (missCombo >= 2) { chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)]; chatTimer = 25; }
                       wasNear = false;
@@ -309,7 +335,7 @@
                   ctx.fillStyle = isRage ? "#ff0055" : currentTheme.snake;
                   ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
-                  // Draw Large Hurdles
+                  // Hurdles
                   ctx.fillStyle = currentTheme.hurdle;
                   hurdles.forEach(h => {
                       ctx.fillRect(h.x, h.y, 40, 40);
@@ -324,11 +350,7 @@
                       totalScore += 10; toxicity = Math.max(0, toxicity - 40); missCombo = 0;
                       playSfx("eatSound");
                       document.getElementById("scoreVal").innerText = totalScore;
-                      if (Math.floor(totalScore/100)+1 > currentLevel) {
-                          currentLevel++; document.getElementById("levelVal").innerText = currentLevel;
-                          createHurdle(); playSfx("levelUpSound");
-                          if (currentLevel % 3 === 1) changeMap();
-                      }
+                      checkLevelUp();
                       createFood();
                   } else { snake.pop(); }
 
@@ -336,7 +358,7 @@
                       ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? currentTheme.snake : currentTheme.body);
                       ctx.fillRect(p.x, p.y, 18, 18);
                       if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
-                          ctx.fillStyle = "gold"; ctx.fillText("👑", p.x + 5, p.y - 5);
+                          ctx.fillStyle = "gold"; ctx.font = "bold 14px Arial"; ctx.fillText("👑", p.x+4, p.y-5);
                       }
                   });
 
@@ -371,7 +393,6 @@
               try {
                   const r = await fetch(`${DB_URL}scores/${id}.json`);
                   const exist = await r.json();
-                  // KEY FIX: Only update if the new score is higher than the saved record
                   if (!exist || score > exist.score) {
                       await fetch(`${DB_URL}scores/${id}.json`, {
                           method: 'PUT',
@@ -382,8 +403,7 @@
           }
 
           function shareToWhatsApp() {
-              const link = window.location.href;
-              const text = `🐍 THE SNAKE\nScore: ${totalScore} (Lvl ${currentLevel})\n"${finalRoastMessage}"\nBeat me: ${link}`;
+              const text = `🐍 THE SNAKE - MVP CHALLENGE\nScore: ${totalScore} | Level: ${currentLevel}\nRoast: "${finalRoastMessage}"\nPlay: ${window.location.href}`;
               window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
           }
 
@@ -407,7 +427,6 @@
               if([32,37,38,39,40].includes(k)) e.preventDefault();
           });
 
-          async function resetDB() { if(confirm("NUKE DATABASE?")){ await fetch(DB_URL+"scores.json",{method:'DELETE'}); location.reload(); } }
           window.onload = fetchGlobalHigh;
      </script>
 </body>

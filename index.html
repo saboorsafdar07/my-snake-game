@@ -145,53 +145,53 @@
           let currentTheme = themes[0];
 
           const startRoasts = [
-             "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
-             "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
-             "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
-             "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.",
-             "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.",
-             "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.",
-             "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.",
-             "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?",
-             "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.",
-             "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."
-         ];
+              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
+              "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
+              "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
+              "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.",
+              "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.",
+              "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.",
+              "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.",
+              "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?",
+              "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.",
+              "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."
+          ];
 
-         const crashRoasts = [
-             "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.",
-             "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?",
-             "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.",
-             "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.",
-             "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.",
-             "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?",
-             "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.",
-             "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.",
-             "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.",
-             "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.",
-             "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."
-         ];
+          const crashRoasts = [
+              "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.",
+              "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?",
+              "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.",
+              "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.",
+              "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.",
+              "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?",
+              "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.",
+              "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.",
+              "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.",
+              "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.",
+              "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."
+          ];
 
-         const backhandedPraise = [
-             "NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.",
-             "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
-             "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.",
-             "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.",
-             "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.",
-             "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.",
-             "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.",
-             "NEW RECORD! Now try doing that in real life."
-         ];
+          const backhandedPraise = [
+              "NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.",
+              "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
+              "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.",
+              "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.",
+              "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.",
+              "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.",
+              "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.",
+              "NEW RECORD! Now try doing that in real life."
+          ];
 
-         const missRoasts = [
-             "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.",
-              "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!",
-              "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?",
-              "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!",
-              "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.",
-              "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.",
-              "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.",
-              "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
-         ];
+          const missRoasts = [
+              "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.",
+               "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!",
+               "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?",
+               "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!",
+               "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.",
+               "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.",
+               "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.",
+               "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
+          ];
 
           function toggleMusic() {
               musicEnabled = !musicEnabled;
@@ -253,9 +253,8 @@
               document.body.style.backgroundColor = currentTheme.bg;
               canvas.style.borderColor = currentTheme.snake;
               
-              // RESET HURDLES ON MAP CHANGE
               hurdles = [];
-              spawnHurdles(3); // Start new map with 3 initial hurdles
+              spawnHurdles(3); 
               
               const n = document.getElementById("map-notifier");
               n.innerText = currentTheme.name; n.style.opacity = "1"; n.style.color = currentTheme.snake;
@@ -264,8 +263,6 @@
           }
 
           function checkLevelUp() {
-              // Level 1: 50, Level 2: 150 (50+100), Level 3: 300 (150+150)...
-              // Simple Logic: score >= level * (level + 1) * 25
               let requiredScore = 0;
               for(let i=1; i<=currentLevel; i++) requiredScore += i * 50;
 
@@ -277,7 +274,7 @@
                   if ((currentLevel - 1) % 3 === 0) {
                       changeMap();
                   } else {
-                      spawnHurdles(3); // Add 3 hurdles for normal level up
+                      spawnHurdles(3);
                   }
               }
           }
@@ -294,8 +291,14 @@
           }
 
           function attemptStart() {
-              const n = document.getElementById("playerName").value.trim();
-              if (n.length < 2) { alert("Enter a name, you walnut!"); return; }
+              const nameInput = document.getElementById("playerName");
+              const n = nameInput.value.trim();
+              if (n.length < 2) { 
+                  const r = startRoasts[Math.floor(Math.random() * startRoasts.length)];
+                  nameInput.placeholder = r;
+                  nameInput.value = "";
+                  return; 
+              }
               currentPlayer = n;
               document.getElementById("bgMusic").volume = 0.15;
               if (musicEnabled) document.getElementById("bgMusic").play().catch(e=>{});
@@ -319,10 +322,11 @@
                   if (snake.some(p => p.x === nX && p.y === nY) || hitHurdle) { handleGameOver(); return; }
 
                   let d = Math.sqrt(Math.pow(nX - foodX, 2) + Math.pow(nY - foodY, 2));
-                  if (d < 35) wasNear = true;
+                  if (d < 40) wasNear = true;
                   else if (wasNear && d > 60) {
                       toxicity = Math.min(100, toxicity + 20); missCombo++;
-                      if (missCombo >= 2) { chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)]; chatTimer = 25; }
+                      chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)]; 
+                      chatTimer = 25;
                       wasNear = false;
                   }
 
@@ -335,7 +339,6 @@
                   ctx.fillStyle = isRage ? "#ff0055" : currentTheme.snake;
                   ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
 
-                  // Hurdles
                   ctx.fillStyle = currentTheme.hurdle;
                   hurdles.forEach(h => {
                       ctx.fillRect(h.x, h.y, 40, 40);
@@ -376,10 +379,12 @@
               playSfx("deathSound");
               
               const localH = parseInt(localStorage.getItem("snakeHS") || 0);
-              if (totalScore > localH) {
+              if (totalScore > localH && totalScore > 0) {
                   finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
                   localStorage.setItem("snakeHS", totalScore);
-              } else { finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)]; }
+              } else { 
+                  finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)]; 
+              }
               
               await saveScore(currentPlayer, totalScore);
               document.getElementById("over-roast").innerText = finalRoastMessage;

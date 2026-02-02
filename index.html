@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,7 +129,6 @@
           const canvas = document.getElementById("gameCanvas");
           const ctx = canvas.getContext("2d");
 
-          // --- ALL YOUR ORIGINAL DATA ---
           let musicEnabled = true, sfxEnabled = true;
           let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
           let hurdles = [];
@@ -173,18 +171,19 @@
               }
           }
 
-          // --- ALL ORIGINAL FUNCTIONS ---
           function toggleMusic() { musicEnabled = !musicEnabled; const m = document.getElementById("bgMusic"); musicEnabled ? (document.getElementById("musicBtn").classList.remove("muted"), gameRunning && !isPaused && m.play()) : (document.getElementById("musicBtn").classList.add("muted"), m.pause()); }
           function toggleSFX() { sfxEnabled = !sfxEnabled; document.getElementById("sfxBtn").classList.toggle("muted", !sfxEnabled); }
           function playSfx(id) { if(sfxEnabled) { let s = document.getElementById(id); s.currentTime = 0; s.play().catch(e=>{}); } }
 
+          // RESTORED ORIGINAL HALL OF FAME LOGIC
           async function fetchGlobalHigh() {
               try {
                   const r = await fetch(DB_URL + "scores.json");
                   const d = await r.json();
                   if (d) {
                       const s = Object.values(d).sort((a,b) => b.score - a.score);
-                      globalBestScore = s[0].score; globalBestName = s[0].name;
+                      globalBestScore = s[0].score; 
+                      globalBestName = s[0].name;
                       document.getElementById("highScoreVal").innerText = globalBestScore;
                       document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
                   }
@@ -206,6 +205,7 @@
                   }
               } catch(e) { list.innerHTML = "Server failed."; }
           }
+
           function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
 
           function spawnHurdles(count) {
@@ -285,7 +285,6 @@
 
                   document.getElementById("toxic-bar").style.height = toxicity + "%";
                   
-                  // Draw Hurdles
                   ctx.fillStyle = currentTheme.hurdle;
                   hurdles.forEach(h => { ctx.fillRect(h.x, h.y, 40, 40); ctx.strokeStyle=currentTheme.snake; ctx.strokeRect(h.x+4, h.y+4, 32, 32); });
 
@@ -356,4 +355,3 @@
      </script>
 </body>
 </html>
-

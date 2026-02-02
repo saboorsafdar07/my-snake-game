@@ -1,437 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>The Snake - Saboor's Global Rage</title>
-     <style>
-         body {
-             background-color: #0d0221;
-             display: flex; flex-direction: column; align-items: center; justify-content: center;
-             min-height: 100vh; margin: 0; color: #00f2ff;
-             font-family: 'Courier New', Courier, monospace;
-             overflow: hidden; user-select: none;
-             transition: background-color 0.8s ease;
-         }
-         #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen {
-             position: absolute; background: rgba(15, 5, 36, 0.98);
-             padding: 40px; border: 3px solid #00f2ff; text-align: center;
-             z-index: 100; box-shadow: 0 0 50px #00f2ff;
-         }
-         #pause-overlay, #leaderboard-screen, #game-over-screen { display: none; }
-         #leaderboard-screen { width: 380px; max-height: 80vh; overflow-y: auto; }
-          .credits { position: absolute; bottom: 10px; right: 15px; font-size: 12px; color: #00f2ff; opacity: 0.7; }
-          .main-container { position: relative; display: flex; align-items: center; justify-content: center; }
-          
-          .toxic-wrapper {
-              position: absolute; right: -40px; display: flex; flex-direction: column; align-items: center;
-          }
-          .toxic-container-vertical {
-              width: 12px; height: 300px; background: #1a1a3a; border: 2px solid #00f2ff;
-              border-radius: 10px; position: relative; display: flex; flex-direction: column; justify-content: flex-end;
-              overflow: hidden;
-          }
-          #toxic-bar { width: 100%; height: 0%; background: linear-gradient(0deg, #00f2ff, #ff0055); transition: height 0.3s; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-          input { background: #16213e; border: 2px solid #00f2ff; color: white; padding: 12px; width: 220px; text-align: center; font-size: 18px; outline: none; margin: 20px auto; display: block; }
-          button { background: #ff0055; color: white; border: none; padding: 15px 35px; font-weight: bold; font-size: 20px; cursor: pointer; text-transform: uppercase; margin: 5px; }
-          .whatsapp-btn { background: #25D366; }
-          
-          .stats-bar {
-              display: flex; justify-content: space-between; width: 800px; padding: 10px 20px; font-size: 18px;
-              background: rgba(0, 242, 255, 0.1); border: 2px solid rgba(0, 242, 255, 0.3); margin-bottom: 10px;
-          }
+<!--
+===========================================
+THE SNAKE – RAGE EDITION
+Author: Saboor
+Commercial HTML5 Arcade Game
+===========================================
+-->
 
-          .audio-settings { position: fixed; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
-          .circle-btn { width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-          .circle-btn svg { width: 24px; height: 24px; fill: #00f2ff; }
-          .circle-btn.muted { border-color: #ff0055; }
-          .circle-btn.muted svg { fill: #ff0055; }
+<title>The Snake – Rage Edition</title>
 
-          canvas { background-color: #0f0524; border: 4px solid #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
-          .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
-          .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
+<style>
+/* ===================== GLOBAL ===================== */
+* { box-sizing: border-box; }
+body {
+    margin:0;
+    background:#0d0221;
+    color:#00f2ff;
+    font-family:'Courier New', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    overflow:hidden;
+    user-select:none;
+}
 
-          #map-notifier {
-              position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-              font-size: 40px; font-weight: bold; color: white; text-shadow: 0 0 20px #00f2ff;
-              pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 200;
-          }
-     </style>
+/* ===================== UI ===================== */
+canvas {
+    background:#0f0524;
+    border:4px solid #00f2ff;
+    box-shadow:0 0 25px rgba(0,242,255,0.3);
+}
+
+button {
+    background:#ff0055;
+    color:white;
+    border:none;
+    padding:14px 30px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    margin:6px;
+}
+
+input {
+    background:#16213e;
+    border:2px solid #00f2ff;
+    color:white;
+    padding:12px;
+    width:220px;
+    font-size:18px;
+    text-align:center;
+}
+
+.overlay {
+    position:absolute;
+    background:rgba(10,5,30,0.97);
+    border:3px solid #00f2ff;
+    padding:35px;
+    text-align:center;
+    box-shadow:0 0 40px #00f2ff;
+    z-index:10;
+}
+
+.hidden { display:none; }
+
+.stats {
+    width:800px;
+    display:flex;
+    justify-content:space-between;
+    padding:10px 15px;
+    margin-bottom:8px;
+    background:rgba(0,242,255,0.08);
+    border:2px solid rgba(0,242,255,0.3);
+}
+
+/* ===================== TOXIC BAR ===================== */
+.toxic-wrap {
+    position:absolute;
+    right:-35px;
+    display:none;
+}
+.toxic-box {
+    width:12px;
+    height:300px;
+    border:2px solid #00f2ff;
+    border-radius:10px;
+    overflow:hidden;
+}
+#toxicBar {
+    width:100%;
+    height:0%;
+    background:linear-gradient(0deg,#00f2ff,#ff0055);
+    transition:height 0.25s;
+}
+
+/* ===================== MAP TEXT ===================== */
+#mapName {
+    position:absolute;
+    font-size:40px;
+    font-weight:bold;
+    opacity:0;
+    transition:0.5s;
+    pointer-events:none;
+}
+
+/* ===================== AUDIO ===================== */
+.audioPanel {
+    position:fixed;
+    top:20px;
+    right:20px;
+    display:flex;
+    gap:12px;
+}
+.audioBtn {
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    border:2px solid #00f2ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+.audioBtn.muted {
+    border-color:#ff0055;
+}
+</style>
 </head>
+
 <body>
-     
-     <audio id="bgMusic" loop src="music.mp3"></audio>
-     <audio id="eatSound" src="eat.mp3" preload="auto"></audio>
-     <audio id="deathSound" src="death.mp3" preload="auto"></audio>
-     <audio id="rageSound" loop src="rage.mp3" preload="auto"></audio>
-     <audio id="levelUpSound" src="levelup.mp3" preload="auto"></audio>
-     <audio id="mapChangeSound" src="mapchange.mp3" preload="auto"></audio>
-     
-     <div id="map-notifier">NEON CITY</div>
 
-     <div class="audio-settings">
-          <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
-             <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-          </div>
-          <div id="sfxBtn" class="circle-btn" onclick="toggleSFX()">
-             <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-          </div>
-     </div>
+<!-- ===================== AUDIO ===================== -->
+<audio id="bgMusic" loop src="music.mp3"></audio>
+<audio id="eatSound" src="eat.mp3"></audio>
+<audio id="deathSound" src="death.mp3"></audio>
+<audio id="rageSound" loop src="rage.mp3"></audio>
 
-     <div id="start-screen">
-          <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
-          <input type="text" id="playerName" placeholder="Enter Name" maxlength="12">
-          <button onclick="attemptStart()">QUICK START ⚡</button>
-          <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
-          <div class="credits">Created by Saboor 🍭</div>
-     </div>
+<!-- ===================== AUDIO UI ===================== -->
+<div class="audioPanel">
+    <div class="audioBtn" id="musicBtn">🎵</div>
+    <div class="audioBtn" id="sfxBtn">🔊</div>
+</div>
 
-     <div id="leaderboard-screen">
-          <h2 style="color:#00f2ff; margin-bottom: 5px;">HALL OF FAME</h2>
-          <div id="leaderboard-list">Loading...</div>
-          <button onclick="closeLeaderboard()">CLOSE</button>
-     </div>
+<!-- ===================== START SCREEN ===================== -->
+<div id="startScreen" class="overlay">
+    <h1 style="font-size:48px;margin:0">THE SNAKE</h1>
+    <p>RAGE EDITION</p>
+    <input id="playerName" placeholder="ENTER NAME" maxlength="12">
+    <br>
+    <button onclick="startGame()">START</button>
+</div>
 
-     <div id="game-over-screen">
-          <h1 id="over-title">GAME OVER</h1>
-          <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
-          <h2 id="over-score">SCORE: 0</h2>
-          <button onclick="location.reload()">TRY AGAIN</button>
-          <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
-     </div>
+<!-- ===================== GAME OVER ===================== -->
+<div id="gameOver" class="overlay hidden">
+    <h1>GAME OVER</h1>
+    <p id="finalRoast"></p>
+    <h2 id="finalScore"></h2>
+    <button onclick="location.reload()">RETRY</button>
+</div>
 
-     <div id="pause-overlay">
-          <h1>PAUSED</h1>
-          <button onclick="togglePause()">RESUME (P)</button>
-     </div>
+<!-- ===================== STATS ===================== -->
+<div class="stats">
+    <div>LVL: <span id="lvl">1</span></div>
+    <div>SCORE: <span id="score">0</span></div>
+</div>
 
-     <div class="stats-bar">
-          <div>LVL: <span id="levelVal" style="color: gold;">1</span></div>
-          <div>SCORE: <span id="scoreVal">0</span></div>
-          <div style="color: #ff0055;">WR: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
-     </div>
+<!-- ===================== GAME ===================== -->
+<div style="position:relative">
+    <canvas id="game" width="800" height="600"></canvas>
 
-     <div class="main-container">
-          <canvas id="gameCanvas" width="800" height="600"></canvas>
-          <div class="toxic-wrapper" id="toxic-ui" style="display:none;">
-              <div class="toxic-container-vertical">
-                  <div id="toxic-bar"></div>
-              </div>
-          </div>
-     </div>
+    <div class="toxic-wrap" id="toxicUI">
+        <div class="toxic-box">
+            <div id="toxicBar"></div>
+        </div>
+    </div>
 
-     <script>
-          const DB_URL = "https://snake-competition-default-rtdb.firebaseio.com/";
-          const canvas = document.getElementById("gameCanvas");
-          const ctx = canvas.getContext("2d");
+    <div id="mapName"></div>
+</div>
 
-          let musicEnabled = true, sfxEnabled = true;
-          let snake = [{x: 400, y: 300}, {x: 380, y: 300}, {x: 360, y: 300}];
-          let hurdles = [];
-          let dx = 20, dy = 0, totalScore = 0, currentLevel = 1, gameRunning = false, isPaused = false;
-          let foodX, foodY, toxicity = 0, isRage = false;
-          let chatTimer = 0, chatMsg = "", wasNear = false, missCombo = 0, currentPlayer = "";
-          let finalRoastMessage = "", globalBestScore = 0, globalBestName = "NONE";
-          let nextDirection = { dx: 20, dy: 0 }, isRageSoundPlaying = false;
+<script>
+/* ===================== CONFIG ===================== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-          const themes = [
-              { name: "NEON CITY", bg: "#0d0221", snake: "#00f2ff", body: "#7000ff", hurdle: "#333" },
-              { name: "EMERALD JUNGLE", bg: "#02210b", snake: "#2ecc71", body: "#27ae60", hurdle: "#3e2723" },
-              { name: "BLOOD MOON", bg: "#210202", snake: "#ff4d4d", body: "#800000", hurdle: "#444" },
-              { name: "DEEP OCEAN", bg: "#021a21", snake: "#00d4ff", body: "#005b96", hurdle: "#1a237e" },
-              { name: "CYBER VOID", bg: "#000000", snake: "#f1c40f", body: "#e67e22", hurdle: "#ffffff" }
-          ];
-          let currentTheme = themes[0];
+const THEMES = [
+    {name:"NEON CITY", bg:"#0d0221", head:"#00f2ff", body:"#7000ff"},
+    {name:"BLOOD MOON", bg:"#210202", head:"#ff4d4d", body:"#800000"},
+    {name:"CYBER VOID", bg:"#000", head:"#f1c40f", body:"#e67e22"}
+];
 
-          const startRoasts = [
-              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
-              "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
-              "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
-              "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.",
-              "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.",
-              "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.",
-              "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.",
-              "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?",
-              "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.",
-              "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."
-          ];
+const ROASTS = [
+    "SKILL ISSUE.",
+    "EMBARRASSING.",
+    "THE WALL WON.",
+    "TRY AGAIN, ROOKIE.",
+    "SNAKE DIED OF SHAME."
+];
 
-          const crashRoasts = [
-              "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.",
-              "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?",
-              "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.",
-              "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.",
-              "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.",
-              "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?",
-              "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.",
-              "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.",
-              "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.",
-              "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.",
-              "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."
-          ];
+/* ===================== STATE ===================== */
+let snake, food, dx, dy;
+let score = 0, level = 1;
+let toxicity = 0, rage = false;
+let running = false;
+let theme = THEMES[0];
+let musicOn = true, sfxOn = true;
 
-          const backhandedPraise = [
-              "NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.",
-              "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
-              "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.",
-              "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.",
-              "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.",
-              "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.",
-              "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.",
-              "NEW RECORD! Now try doing that in real life."
-          ];
+/* ===================== INIT ===================== */
+function init() {
+    snake = [{x:400,y:300},{x:380,y:300}];
+    dx = 20; dy = 0;
+    food = spawnFood();
+}
+init();
 
-          const missRoasts = [
-              "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.",
-               "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!",
-               "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?",
-               "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!",
-               "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.",
-               "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.",
-               "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.",
-               "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
-          ];
+/* ===================== GAME ===================== */
+function startGame(){
+    const name = playerName.value.trim();
+    if(name.length < 2){
+        alert("ENTER A NAME.");
+        return;
+    }
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("toxicUI").style.display="block";
+    running = true;
+    bgMusic.volume = 0.15;
+    if(musicOn) bgMusic.play();
+    loop();
+}
 
-          function toggleMusic() {
-              musicEnabled = !musicEnabled;
-              const m = document.getElementById("bgMusic");
-              musicEnabled ? (document.getElementById("musicBtn").classList.remove("muted"), gameRunning && !isPaused && m.play()) : (document.getElementById("musicBtn").classList.add("muted"), m.pause());
-          }
-          function toggleSFX() { sfxEnabled = !sfxEnabled; document.getElementById("sfxBtn").classList.toggle("muted", !sfxEnabled); }
-          function playSfx(id) { if(sfxEnabled) { let s = document.getElementById(id); s.currentTime = 0; s.play().catch(e=>{}); } }
+function spawnFood(){
+    return {
+        x:Math.floor(Math.random()*39)*20,
+        y:Math.floor(Math.random()*29)*20
+    };
+}
 
-          async function fetchGlobalHigh() {
-              try {
-                  const r = await fetch(DB_URL + "scores.json");
-                  const d = await r.json();
-                  if (d) {
-                      const s = Object.values(d).sort((a,b) => b.score - a.score);
-                      globalBestScore = s[0].score; globalBestName = s[0].name;
-                      document.getElementById("highScoreVal").innerText = globalBestScore;
-                      document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
-                  }
-              } catch(e) {}
-          }
+function loop(){
+    if(!running) return;
 
-          async function showLeaderboard() {
-              document.getElementById("leaderboard-screen").style.display = "block";
-              const list = document.getElementById("leaderboard-list");
-              list.innerHTML = "Fetching Legends...";
-              try {
-                  const r = await fetch(DB_URL + "scores.json");
-                  const d = await r.json();
-                  if (d) {
-                      const s = Object.values(d).sort((a,b) => b.score - a.score);
-                      let h = `<div class="lb-header">TOP 5 LEGENDS</div>`;
-                      h += s.slice(0, 5).map((p, i) => `<div class="lb-item"><span>${i+1}. ${p.name}${i==0?' 👑':''}</span><span>${p.score}</span></div>`).join('');
-                      h += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
-                      h += s.map((p, i) => `<div class="lb-item"><span>${i+1}. ${p.name}</span><span>${p.score}</span></div>`).join('');
-                      list.innerHTML = h;
-                  } else { list.innerHTML = "No records found."; }
-              } catch(e) { list.innerHTML = "Server connection failed."; }
-          }
-          function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
+    setTimeout(()=>{
+        update();
+        draw();
+        loop();
+    }, rage ? 45 : 120);
+}
 
-          function spawnHurdles(count) {
-              for(let i=0; i<count; i++) {
-                  let hX, hY;
-                  do {
-                      hX = Math.floor(Math.random() * 37) * 20;
-                      hY = Math.floor(Math.random() * 27) * 20;
-                  } while (
-                      snake.some(p => Math.abs(p.x - hX) < 60 && Math.abs(p.y - hY) < 60) || 
-                      (Math.abs(hX - foodX) < 60)
-                  );
-                  hurdles.push({x: hX, y: hY});
-              }
-          }
+function update(){
+    let head = {x:snake[0].x+dx, y:snake[0].y+dy};
 
-          function changeMap() {
-              let idx = (Math.floor((currentLevel-1) / 3)) % themes.length;
-              currentTheme = themes[idx];
-              document.body.style.backgroundColor = currentTheme.bg;
-              canvas.style.borderColor = currentTheme.snake;
-              
-              hurdles = [];
-              spawnHurdles(3); 
-              
-              const n = document.getElementById("map-notifier");
-              n.innerText = currentTheme.name; n.style.opacity = "1"; n.style.color = currentTheme.snake;
-              playSfx("mapChangeSound");
-              setTimeout(() => n.style.opacity = "0", 2500);
-          }
+    if(head.x<0) head.x=780;
+    if(head.y<0) head.y=580;
+    if(head.x>=800) head.x=0;
+    if(head.y>=600) head.y=0;
 
-          function checkLevelUp() {
-              let requiredScore = 0;
-              for(let i=1; i<=currentLevel; i++) requiredScore += i * 50;
+    if(snake.some(p=>p.x===head.x && p.y===head.y)){
+        endGame();
+        return;
+    }
 
-              if (totalScore >= requiredScore) {
-                  currentLevel++;
-                  document.getElementById("levelVal").innerText = currentLevel;
-                  playSfx("levelUpSound");
-                  
-                  if ((currentLevel - 1) % 3 === 0) {
-                      changeMap();
-                  } else {
-                      spawnHurdles(3); 
-                  }
-              }
-          }
+    snake.unshift(head);
 
-          function createFood() {
-              do {
-                  foodX = Math.floor(Math.random() * 39) * 20;
-                  foodY = Math.floor(Math.random() * 29) * 20;
-              } while (
-                  snake.some(p => p.x === foodX && p.y === foodY) || 
-                  hurdles.some(h => foodX >= h.x && foodX < h.x+40 && foodY >= h.y && foodY < h.y+40)
-              );
-              wasNear = false;
-          }
+    if(head.x===food.x && head.y===food.y){
+        score+=10;
+        toxicity=Math.max(0,toxicity-30);
+        food=spawnFood();
+        scoreVal();
+        if(sfxOn) eatSound.play();
+    } else {
+        snake.pop();
+        toxicity+=2;
+    }
 
-          function attemptStart() {
-              const n = document.getElementById("playerName").value.trim();
-              if (n.length < 2) { 
-                  // Notification roast added here
-                  alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]); 
-                  return; 
-              }
-              currentPlayer = n;
-              document.getElementById("bgMusic").volume = 0.15;
-              if (musicEnabled) document.getElementById("bgMusic").play().catch(e=>{});
-              document.getElementById("start-screen").style.display = "none";
-              document.getElementById("toxic-ui").style.display = "flex";
-              gameRunning = true; createFood(); gameLoop();
-          }
+    rage = toxicity>=100;
+    toxicBar.style.height=Math.min(toxicity,100)+"%";
+}
 
-          function gameLoop() {
-              if (!gameRunning || isPaused) return;
-              let speed = isRage ? 45 : Math.max(45, 140 - (totalScore/4));
-              setTimeout(() => {
-                  dx = nextDirection.dx; dy = nextDirection.dy;
-                  ctx.fillStyle = currentTheme.bg; ctx.fillRect(0, 0, 800, 600);
-                  
-                  let nX = snake[0].x + dx, nY = snake[0].y + dy;
-                  if (nX < 0) nX = 780; else if (nX >= 800) nX = 0;
-                  if (nY < 0) nY = 580; else if (nY >= 600) nY = 0;
+function draw(){
+    ctx.fillStyle=theme.bg;
+    ctx.fillRect(0,0,800,600);
 
-                  const hitHurdle = hurdles.some(h => nX >= h.x && nX < h.x + 40 && nY >= h.y && nY < h.y + 40);
-                  if (snake.some(p => p.x === nX && p.y === nY) || hitHurdle) { handleGameOver(); return; }
+    ctx.fillStyle=theme.head;
+    ctx.fillRect(food.x,food.y,18,18);
 
-                  let d = Math.sqrt(Math.pow(nX - foodX, 2) + Math.pow(nY - foodY, 2));
-                  // Fix: Improved Miss Logic
-                  if (d < 45) wasNear = true; 
-                  else if (wasNear && d > 60) {
-                      toxicity = Math.min(100, toxicity + 20); missCombo++;
-                      chatMsg = missRoasts[Math.floor(Math.random()*missRoasts.length)]; chatTimer = 25;
-                      wasNear = false;
-                  }
+    snake.forEach((p,i)=>{
+        ctx.fillStyle = rage ? "#ff0055" : (i===0?theme.head:theme.body);
+        ctx.fillRect(p.x,p.y,18,18);
+    });
+}
 
-                  isRage = toxicity >= 100;
-                  const rS = document.getElementById("rageSound"), mS = document.getElementById("bgMusic");
-                  if (isRage && sfxEnabled) { if(!isRageSoundPlaying){ mS.pause(); rS.play(); isRageSoundPlaying=true; } }
-                  else if (isRageSoundPlaying) { rS.pause(); if(musicEnabled) mS.play(); isRageSoundPlaying=false; }
+function scoreVal(){
+    document.getElementById("score").innerText=score;
+}
 
-                  document.getElementById("toxic-bar").style.height = toxicity + "%";
-                  ctx.fillStyle = isRage ? "#ff0055" : currentTheme.snake;
-                  ctx.beginPath(); ctx.arc(foodX+10, foodY+10, 8, 0, Math.PI*2); ctx.fill();
+function endGame(){
+    running=false;
+    bgMusic.pause();
+    if(sfxOn) deathSound.play();
+    finalScore.innerText="SCORE: "+score;
+    finalRoast.innerText=ROASTS[Math.floor(Math.random()*ROASTS.length)];
+    gameOver.classList.remove("hidden");
+}
 
-                  ctx.fillStyle = currentTheme.hurdle;
-                  hurdles.forEach(h => {
-                      ctx.fillRect(h.x, h.y, 40, 40);
-                      ctx.strokeStyle = currentTheme.snake; ctx.lineWidth = 2;
-                      ctx.strokeRect(h.x+4, h.y+4, 32, 32);
-                  });
+/* ===================== CONTROLS ===================== */
+document.addEventListener("keydown",e=>{
+    if(!running) return;
+    if(e.key==="ArrowLeft" && dx===0){dx=-20;dy=0;}
+    if(e.key==="ArrowRight" && dx===0){dx=20;dy=0;}
+    if(e.key==="ArrowUp" && dy===0){dx=0;dy=-20;}
+    if(e.key==="ArrowDown" && dy===0){dx=0;dy=20;}
+});
 
-                  const head = { x: nX, y: nY };
-                  snake.unshift(head);
+/* ===================== AUDIO ===================== */
+musicBtn.onclick=()=>{
+    musicOn=!musicOn;
+    musicBtn.classList.toggle("muted",!musicOn);
+    musicOn?bgMusic.play():bgMusic.pause();
+};
+sfxBtn.onclick=()=>{
+    sfxOn=!sfxOn;
+    sfxBtn.classList.toggle("muted",!sfxOn);
+};
+</script>
 
-                  if (nX === foodX && nY === foodY) {
-                      totalScore += 10; toxicity = Math.max(0, toxicity - 40); missCombo = 0;
-                      playSfx("eatSound");
-                      document.getElementById("scoreVal").innerText = totalScore;
-                      checkLevelUp();
-                      createFood();
-                  } else { snake.pop(); }
-
-                  snake.forEach((p, i) => {
-                      ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? currentTheme.snake : currentTheme.body);
-                      ctx.fillRect(p.x, p.y, 18, 18);
-                      if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
-                          ctx.fillStyle = "gold"; ctx.font = "bold 14px Arial"; ctx.fillText("👑", p.x+4, p.y-5);
-                      }
-                  });
-
-                  if (chatTimer > 0) {
-                      ctx.fillStyle = "white"; ctx.font = "14px Courier"; ctx.textAlign = "center";
-                      ctx.fillText(chatMsg, snake[0].x+10, snake[0].y-15); chatTimer--;
-                  }
-                  gameLoop();
-              }, speed);
-          }
-
-          async function handleGameOver() {
-              gameRunning = false;
-              document.getElementById("bgMusic").pause(); document.getElementById("rageSound").pause();
-              playSfx("deathSound");
-              
-              const localH = parseInt(localStorage.getItem("snakeHS") || 0);
-              // Fix: Corrected Roast Library selection logic
-              if (totalScore > localH && totalScore > 0) {
-                  finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
-                  localStorage.setItem("snakeHS", totalScore);
-              } else { 
-                  finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)]; 
-              }
-              
-              await saveScore(currentPlayer, totalScore);
-              document.getElementById("over-roast").innerText = finalRoastMessage;
-              document.getElementById("over-score").innerText = "SCORE: " + totalScore;
-              document.getElementById("game-over-screen").style.display = "block";
-          }
-
-          async function saveScore(name, score) {
-              if (score <= 0) return;
-              const id = name.toLowerCase().trim();
-              try {
-                  const r = await fetch(`${DB_URL}scores/${id}.json`);
-                  const exist = await r.json();
-                  if (!exist || score > exist.score) {
-                      await fetch(`${DB_URL}scores/${id}.json`, {
-                          method: 'PUT',
-                          body: JSON.stringify({ name: name, score: score, level: currentLevel })
-                      });
-                  }
-              } catch(e) {}
-          }
-
-          function shareToWhatsApp() {
-              const text = `🐍 THE SNAKE - MVP CHALLENGE\nScore: ${totalScore} | Level: ${currentLevel}\nRoast: "${finalRoastMessage}"\nPlay: ${window.location.href}`;
-              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-          }
-
-          function togglePause() {
-              if(!gameRunning) return;
-              isPaused = !isPaused;
-              document.getElementById("pause-overlay").style.display = isPaused ? "block" : "none";
-              const m = document.getElementById("bgMusic"), r = document.getElementById("rageSound");
-              if (isPaused) { m.pause(); r.pause(); } else { if(isRage) r.play(); else if(musicEnabled) m.play(); gameLoop(); }
-          }
-
-          document.addEventListener("keydown", e => {
-              if (document.activeElement.tagName === "INPUT") return;
-              if (e.keyCode === 80) togglePause();
-              if (isPaused || !gameRunning) return;
-              const k = e.keyCode;
-              if ((k===37||k===65) && dx===0) nextDirection = {dx:-20, dy:0};
-              if ((k===38||k===87) && dy===0) nextDirection = {dx:0, dy:-20};
-              if ((k===39||k===68) && dx===0) nextDirection = {dx:20, dy:0};
-              if ((k===40||k===83) && dy===0) nextDirection = {dx:0, dy:20};
-              if([32,37,38,39,40].includes(k)) e.preventDefault();
-          });
-
-          window.onload = fetchGlobalHigh;
-     </script>
 </body>
 </html>
+

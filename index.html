@@ -2,59 +2,82 @@
 <html lang="en">
 <head>
      <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
      <title>The Snake - Saboor's Global Rage</title>
      <style>
          body {
              background-color: #0d0221;
-             display: flex; flex-direction: column; align-items: center; justify-content: center;
+             display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
              min-height: 100vh; margin: 0; color: #00f2ff;
              font-family: 'Courier New', Courier, monospace;
              overflow: hidden; user-select: none;
              transition: background-color 0.8s ease;
+             touch-action: none; /* Prevents scrolling while playing */
          }
          #start-screen, #pause-overlay, #leaderboard-screen, #game-over-screen {
              position: absolute; background: rgba(15, 5, 36, 0.98);
-             padding: 40px; border: 3px solid #00f2ff; text-align: center;
+             padding: 20px; border: 3px solid #00f2ff; text-align: center;
              z-index: 100; box-shadow: 0 0 50px #00f2ff;
+             width: 80%; max-width: 400px; top: 50%; left: 50%; transform: translate(-50%, -50%);
          }
          #pause-overlay, #leaderboard-screen, #game-over-screen { display: none; }
-         #leaderboard-screen { width: 380px; max-height: 80vh; overflow-y: auto; }
-          .credits { position: absolute; bottom: 10px; right: 15px; font-size: 12px; color: #00f2ff; opacity: 0.7; }
-          .main-container { position: relative; display: flex; align-items: center; justify-content: center; }
+         #leaderboard-screen { max-height: 80vh; overflow-y: auto; }
+          .credits { position: absolute; bottom: 10px; right: 15px; font-size: 10px; color: #00f2ff; opacity: 0.7; }
           
+          .main-container { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; }
+          
+          canvas { 
+            background-color: #0f0524; border: 4px solid #00f2ff; 
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); 
+            max-width: 95vw; height: auto; 
+          }
+
           .toxic-wrapper {
-              position: absolute; right: -40px; display: flex; flex-direction: column; align-items: center;
+              position: absolute; right: 5px; top: 50px; display: flex; flex-direction: column; align-items: center;
           }
           .toxic-container-vertical {
-              width: 12px; height: 300px; background: #1a1a3a; border: 2px solid #00f2ff;
+              width: 10px; height: 150px; background: #1a1a3a; border: 2px solid #00f2ff;
               border-radius: 10px; position: relative; display: flex; flex-direction: column; justify-content: flex-end;
               overflow: hidden;
           }
           #toxic-bar { width: 100%; height: 0%; background: linear-gradient(0deg, #00f2ff, #ff0055); transition: height 0.3s; }
 
-          input { background: #16213e; border: 2px solid #00f2ff; color: white; padding: 12px; width: 220px; text-align: center; font-size: 18px; outline: none; margin: 20px auto; display: block; }
-          button { background: #ff0055; color: white; border: none; padding: 15px 35px; font-weight: bold; font-size: 20px; cursor: pointer; text-transform: uppercase; margin: 5px; }
+          input { background: #16213e; border: 2px solid #00f2ff; color: white; padding: 12px; width: 80%; text-align: center; font-size: 18px; outline: none; margin: 10px auto; display: block; }
+          button { background: #ff0055; color: white; border: none; padding: 12px 25px; font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; margin: 5px; }
           .whatsapp-btn { background: #25D366; }
           
           .stats-bar {
-              display: flex; justify-content: space-between; width: 800px; padding: 10px 20px; font-size: 18px;
-              background: rgba(0, 242, 255, 0.1); border: 2px solid rgba(0, 242, 255, 0.3); margin-bottom: 10px;
+              display: flex; justify-content: space-between; width: 95vw; max-width: 800px; padding: 5px 10px; font-size: 14px;
+              background: rgba(0, 242, 255, 0.1); border: 2px solid rgba(0, 242, 255, 0.3); margin-top: 5px;
           }
 
-          .audio-settings { position: fixed; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
-          .circle-btn { width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-          .circle-btn svg { width: 24px; height: 24px; fill: #00f2ff; }
-          .circle-btn.muted { border-color: #ff0055; }
-          .circle-btn.muted svg { fill: #ff0055; }
+          .audio-settings { position: fixed; top: 10px; right: 10px; display: flex; gap: 10px; z-index: 1000; }
+          .circle-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(0, 242, 255, 0.1); border: 2px solid #00f2ff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+          .circle-btn svg { width: 20px; height: 20px; fill: #00f2ff; }
 
-          canvas { background-color: #0f0524; border: 4px solid #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
-          .lb-item { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 8px 0; }
-          .lb-header { color: #ff0055; font-weight: bold; margin-top: 15px; border-bottom: 2px solid #ff0055; }
+          /* Mobile Controls */
+          #mobile-controls {
+              display: none; grid-template-areas: ". up ." "left pause right" ". down .";
+              gap: 10px; margin-top: 20px; padding-bottom: 20px;
+          }
+          .control-btn {
+              width: 60px; height: 60px; background: rgba(0, 242, 255, 0.2);
+              border: 2px solid #00f2ff; color: #00f2ff; border-radius: 10px;
+              display: flex; align-items: center; justify-content: center; font-weight: bold;
+          }
+          #btn-up { grid-area: up; } #btn-left { grid-area: left; }
+          #btn-right { grid-area: right; } #btn-down { grid-area: down; }
+          #btn-pause { grid-area: pause; background: rgba(255, 0, 85, 0.2); border-color: #ff0055; }
+
+          @media (max-width: 768px) {
+              #mobile-controls { display: grid; }
+              .toxic-wrapper { top: 20px; }
+              .stats-bar { font-size: 11px; }
+          }
 
           #map-notifier {
-              position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-              font-size: 40px; font-weight: bold; color: white; text-shadow: 0 0 20px #00f2ff;
+              position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%);
+              font-size: 30px; font-weight: bold; color: white; text-shadow: 0 0 20px #00f2ff;
               pointer-events: none; opacity: 0; transition: opacity 0.5s; z-index: 200;
           }
      </style>
@@ -72,15 +95,15 @@
 
      <div class="audio-settings">
           <div id="musicBtn" class="circle-btn" onclick="toggleMusic()">
-             <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
           </div>
           <div id="sfxBtn" class="circle-btn" onclick="toggleSFX()">
-             <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
           </div>
      </div>
 
      <div id="start-screen">
-          <h1 style="font-size: 50px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
+          <h1 style="font-size: 30px; margin:0; letter-spacing: 5px;">THE SNAKE</h1>
           <input type="text" id="playerName" placeholder="Enter Name" maxlength="12">
           <button onclick="attemptStart()">QUICK START ⚡</button>
           <button onclick="showLeaderboard()">LEADERBOARD 🏆</button>
@@ -95,21 +118,21 @@
 
      <div id="game-over-screen">
           <h1 id="over-title">GAME OVER</h1>
-          <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 18px;"></p>
+          <p id="over-roast" style="color: #ff0055; font-weight: bold; font-size: 14px;"></p>
           <h2 id="over-score">SCORE: 0</h2>
           <button onclick="location.reload()">TRY AGAIN</button>
-          <button class="whatsapp-btn" onclick="shareToWhatsApp()">SHARE TO WHATSAPP 📲</button>
+          <button class="whatsapp-btn" onclick="shareToWhatsApp()">WHATSAPP 📲</button>
      </div>
 
      <div id="pause-overlay">
           <h1>PAUSED</h1>
-          <button onclick="togglePause()">RESUME (P)</button>
+          <button onclick="togglePause()">RESUME</button>
      </div>
 
      <div class="stats-bar">
           <div>LVL: <span id="levelVal" style="color: gold;">1</span></div>
           <div>SCORE: <span id="scoreVal">0</span></div>
-          <div style="color: #ff0055;">WR: <span id="highScoreVal">0</span> BY <span id="highScoreName">NONE</span></div>
+          <div style="color: #ff0055;">WR: <span id="highScoreVal">0</span></div>
      </div>
 
      <div class="main-container">
@@ -119,6 +142,14 @@
                   <div id="toxic-bar"></div>
               </div>
           </div>
+     </div>
+
+     <div id="mobile-controls">
+         <div class="control-btn" id="btn-up" onclick="handleInput('up')">▲</div>
+         <div class="control-btn" id="btn-left" onclick="handleInput('left')">◀</div>
+         <div class="control-btn" id="btn-pause" onclick="togglePause()">II</div>
+         <div class="control-btn" id="btn-right" onclick="handleInput('right')">▶</div>
+         <div class="control-btn" id="btn-down" onclick="handleInput('down')">▼</div>
      </div>
 
      <script>
@@ -144,54 +175,10 @@
           ];
           let currentTheme = themes[0];
 
-          const startRoasts = [
-              "Type a name, you uneducated walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.",
-              "Identify yourself so I know who to laugh at.", "Is your brain on airplane mode?", "Error 404: Player's identity not found.",
-              "Even a goldfish has a name. What's yours?", "Enter a name or go back to nursery school.", "Hurry up, I'm losing CPU cycles!",
-              "Type something! Anything! You useless brick!", "The input box isn't a mirror, don't just stare.", "Waiting for a name... any century now.",
-              "I can't track your failures without a name.", "A name. 3 letters. Can you manage that?", "Your keyboard is for typing, not drooling.",
-              "Is this too complex for you already?", "Don't be shy, we already know you're bad.", "Name. Now. Don't make me ask again.",
-              "System waiting for a human. Only found a potato.", "Loading... oh wait, YOU haven't typed yet.", "Just pick a name and lose already.",
-              "The snake is hungry, and you're wasting time.", "Enter a name to begin your humiliation.", "Does your mom know you're this slow?",
-              "If you can't type a name, don't try the game.", "Input required. Intelligence not expected.", "Stop staring and start typing.",
-              "Who are you? Nobody? Thought so.", "My code is faster than your brain.", "I'm literally falling asleep here."
-          ];
-
-          const crashRoasts = [
-              "PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.",
-              "WAS THAT A COLLISION OR A CRY FOR HELP?", "RESTARTING WON'T FIX YOUR SKILL ISSUE.", "EMBARRASSING. TRULY.", "DO YOU NEED GLASSES?",
-              "A POTATO HAS BETTER REFLEXES.", "MY CAT WALKED ON THE KEYS AND DID BETTER.", "IF LOSING WAS AN OLYMPIC SPORT, YOU'D HAVE GOLD.",
-              "YOU'RE THE REASON SHAMPOO HAS INSTRUCTIONS.", "I'VE SEEN BREAD PLAY BETTER THAN THIS.", "GO PLAY TETRIS, THIS IS TOO FAST FOR YOU.",
-              "THE SNAKE DIED OF SHAME, NOT THE WALL.", "STOP WASTING ELECTRICITY.", "BRAVO! You hit the only thing you were supposed to avoid.",
-              "I'D CALL YOU TRASH BUT TRASH CAN BE RECYCLED.", "THAT WAS PHYSICALLY PAINFUL TO WATCH.", "IS YOUR MONITOR EVEN ON?",
-              "YOU FAILED. AGAIN. SURPRISE SURPRISE.", "MAYBE TRY LUDO? IT'S TURN-BASED.", "DON'T CRY. JUST GET BETTER.", "CLOWN BEHAVIOR.",
-              "ARE YOU TIRED? BECAUSE THAT WAS LAZY.", "SNAKE GO CRASH. USER GO CRY.", "ABSOLUTE GARBAGE.", "MY GRANDMA PLAYS FASTER.",
-              "YOU HIT THE WALL LIKE IT OWED YOU MONEY.", "ERROR: SKILL NOT FOUND.", "LOGIC NOT FOUND.", "TRY USING YOUR HANDS NEXT TIME.",
-              "DO YOU ENJOY LOSING?", "TRAGIC. SIMPLY TRAGIC.", "SADDEST ATTEMPT OF THE DAY.", "YOU'RE NOT BUILT FOR THIS.",
-              "QUITTING IS ALWAYS AN OPTION.", "YOU'RE LAGGING IN REAL LIFE.", "I'VE SEEN BOTS WITH MORE SOUL.", "JUST... WOW. BAD."
-          ];
-
-          const backhandedPraise = [
-              "NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Mom is so proud of her basement dweller.",
-              "NEW RECORD! Luck is a powerful thing for the brainless.", "WOW, YOU BEAT IT! Too bad you'll never be this good at life.",
-              "NEW HIGH SCORE! Enjoy your 5 seconds of meaningless glory.", "NEW RECORD! You're officially the king of losers.",
-              "NEW RECORD! Even a broken clock is right twice a day.", "NEW HIGH SCORE! I guess even you can win sometimes.",
-              "AMAZING! You finally did something other than failing.", "NEW RECORD! Don't let it go to your head, it's still a low bar.",
-              "NEW HIGH SCORE! Your only achievement this year.", "WOW! You finally beat the ghost of your own failure.",
-              "NEW RECORD! You're the fastest snail in the garden.", "HIGH SCORE! Celebrate with some water and a nap.",
-              "NEW RECORD! Now try doing that in real life."
-          ];
-
-          const missRoasts = [
-              "EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "DID YOU BLINK?", "SNAIL!", "GIT GUD.", "STAY MAD.",
-               "APPLE REJECTED YOU!", "MY GRANDMA TARGETS BETTER!", "ARE YOU PLAYING WITH YOUR TOES?", "STOP EMBARRASSING YOURSELF!",
-               "MISSING IS YOUR ONLY SKILL!", "WHOOSH!", "AIR BALL!", "ALMOST... BUT NO.", "WAKE UP!", "IS YOUR MONITOR ON?",
-               "NICE AIM, STORMTROOPER!", "YOU MISSED A STATIONARY OBJECT.", "HOW?!", "WOW, YOU'RE SPECIAL.", "CLOSE BUT NO CIGAR!",
-               "MAYBE NEXT TIME, BUDDY.", "SNAKE SAYS NO.", "TARGET LOST!", "YOU'RE BAD AT THIS.", "TRY HITTING IT NEXT TIME.", "SAD.",
-               "LOOK AT THE SCREEN!", "REFLEXES OF A SNAIL!", "GO TO SLEEP.", "FOCUS!", "JUST QUIT.", "THAT WAS SAD TO WATCH.",
-               "HEHE, MISSED.", "STILL ZERO SKILL.", "IMAGINE MISSING THAT.", "YOU'RE A JOKE.", "CLOWN BEHAVIOR!", "DO BETTER.",
-               "WHY ARE YOU LIKE THIS?", "FAIL!", "SLOPPY!", "YAWN.", "BORING MISS.", "GET GOOD.", "SKILL ISSUE!", "ROOKIE MOVE."
-          ];
+          const startRoasts = ["Type a name, you walnut!", "Are you allergic to keyboards?", "Name box is empty, just like your future.", "Even a goldfish has a name.", "Hurry up, I'm losing CPU cycles!"];
+          const crashRoasts = ["PATHETIC. JUST UNINSTALL.", "THAT WALL HAD A FAMILY!", "SCORE LOWER THAN YOUR IQ.", "EVEN THE SNAKE IS DISAPPOINTED.", "A POTATO HAS BETTER REFLEXES.", "ERROR: SKILL NOT FOUND."];
+          const backhandedPraise = ["NEW RECORD! Finally the smartest among the idiots.", "HIGH SCORE! Your only achievement this year.", "AMAZING! You finally did something other than failing."];
+          const missRoasts = ["EMOTIONAL DAMAGE!", "WHEEZE... MISS?!", "NICE WHIFF!", "LMAO, TRASH.", "GIT GUD.", "STAY MAD."];
 
           function toggleMusic() {
               musicEnabled = !musicEnabled;
@@ -209,7 +196,6 @@
                       const s = Object.values(d).sort((a,b) => b.score - a.score);
                       globalBestScore = s[0].score; globalBestName = s[0].name;
                       document.getElementById("highScoreVal").innerText = globalBestScore;
-                      document.getElementById("highScoreName").innerText = globalBestName.toUpperCase();
                   }
               } catch(e) {}
           }
@@ -217,19 +203,16 @@
           async function showLeaderboard() {
               document.getElementById("leaderboard-screen").style.display = "block";
               const list = document.getElementById("leaderboard-list");
-              list.innerHTML = "Fetching Legends...";
+              list.innerHTML = "Fetching...";
               try {
                   const r = await fetch(DB_URL + "scores.json");
                   const d = await r.json();
                   if (d) {
                       const s = Object.values(d).sort((a,b) => b.score - a.score);
-                      let h = `<div class="lb-header">TOP 5 LEGENDS</div>`;
-                      h += s.slice(0, 5).map((p, i) => `<div class="lb-item"><span>${i+1}. ${p.name}${i==0?' 👑':''}</span><span>${p.score}</span></div>`).join('');
-                      h += `<div class="lb-header" style="margin-top:20px">ALL PLAYERS</div>`;
-                      h += s.map((p, i) => `<div class="lb-item"><span>${i+1}. ${p.name}</span><span>${p.score}</span></div>`).join('');
+                      let h = s.slice(0, 10).map((p, i) => `<div style="display:flex;justify-content:space-between;padding:5px;border-bottom:1px solid #444"><span>${i+1}. ${p.name}</span><span>${p.score}</span></div>`).join('');
                       list.innerHTML = h;
-                  } else { list.innerHTML = "No records found."; }
-              } catch(e) { list.innerHTML = "Server connection failed."; }
+                  }
+              } catch(e) { list.innerHTML = "Error!"; }
           }
           function closeLeaderboard() { document.getElementById("leaderboard-screen").style.display = "none"; }
 
@@ -240,8 +223,7 @@
                       hX = Math.floor(Math.random() * 37) * 20;
                       hY = Math.floor(Math.random() * 27) * 20;
                   } while (
-                      snake.some(p => Math.abs(p.x - hX) < 60 && Math.abs(p.y - hY) < 60) || 
-                      (Math.abs(hX - foodX) < 60)
+                      snake.some(p => Math.abs(p.x - hX) < 60 && Math.abs(p.y - hY) < 60) || (Math.abs(hX - foodX) < 60)
                   );
                   hurdles.push({x: hX, y: hY});
               }
@@ -252,10 +234,8 @@
               currentTheme = themes[idx];
               document.body.style.backgroundColor = currentTheme.bg;
               canvas.style.borderColor = currentTheme.snake;
-              
               hurdles = [];
               spawnHurdles(3); 
-              
               const n = document.getElementById("map-notifier");
               n.innerText = currentTheme.name; n.style.opacity = "1"; n.style.color = currentTheme.snake;
               playSfx("mapChangeSound");
@@ -265,17 +245,12 @@
           function checkLevelUp() {
               let requiredScore = 0;
               for(let i=1; i<=currentLevel; i++) requiredScore += i * 50;
-
               if (totalScore >= requiredScore) {
                   currentLevel++;
                   document.getElementById("levelVal").innerText = currentLevel;
                   playSfx("levelUpSound");
-                  
-                  if ((currentLevel - 1) % 3 === 0) {
-                      changeMap();
-                  } else {
-                      spawnHurdles(3); 
-                  }
+                  if ((currentLevel - 1) % 3 === 0) changeMap();
+                  else spawnHurdles(3);
               }
           }
 
@@ -284,19 +259,14 @@
                   foodX = Math.floor(Math.random() * 39) * 20;
                   foodY = Math.floor(Math.random() * 29) * 20;
               } while (
-                  snake.some(p => p.x === foodX && p.y === foodY) || 
-                  hurdles.some(h => foodX >= h.x && foodX < h.x+40 && foodY >= h.y && foodY < h.y+40)
+                  snake.some(p => p.x === foodX && p.y === foodY) || hurdles.some(h => foodX >= h.x && foodX < h.x+40 && foodY >= h.y && foodY < h.y+40)
               );
               wasNear = false;
           }
 
           function attemptStart() {
               const n = document.getElementById("playerName").value.trim();
-              if (n.length < 2) { 
-                  // Notification roast added here
-                  alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]); 
-                  return; 
-              }
+              if (n.length < 2) { alert(startRoasts[Math.floor(Math.random() * startRoasts.length)]); return; }
               currentPlayer = n;
               document.getElementById("bgMusic").volume = 0.15;
               if (musicEnabled) document.getElementById("bgMusic").play().catch(e=>{});
@@ -320,7 +290,6 @@
                   if (snake.some(p => p.x === nX && p.y === nY) || hitHurdle) { handleGameOver(); return; }
 
                   let d = Math.sqrt(Math.pow(nX - foodX, 2) + Math.pow(nY - foodY, 2));
-                  // Fix: Improved Miss Logic
                   if (d < 45) wasNear = true; 
                   else if (wasNear && d > 60) {
                       toxicity = Math.min(100, toxicity + 20); missCombo++;
@@ -351,20 +320,16 @@
                       totalScore += 10; toxicity = Math.max(0, toxicity - 40); missCombo = 0;
                       playSfx("eatSound");
                       document.getElementById("scoreVal").innerText = totalScore;
-                      checkLevelUp();
-                      createFood();
+                      checkLevelUp(); createFood();
                   } else { snake.pop(); }
 
                   snake.forEach((p, i) => {
                       ctx.fillStyle = isRage ? "#ff0055" : (i === 0 ? currentTheme.snake : currentTheme.body);
                       ctx.fillRect(p.x, p.y, 18, 18);
-                      if (i === 0 && currentPlayer.toLowerCase() === globalBestName.toLowerCase()) {
-                          ctx.fillStyle = "gold"; ctx.font = "bold 14px Arial"; ctx.fillText("👑", p.x+4, p.y-5);
-                      }
                   });
 
                   if (chatTimer > 0) {
-                      ctx.fillStyle = "white"; ctx.font = "14px Courier"; ctx.textAlign = "center";
+                      ctx.fillStyle = "white"; ctx.font = "16px Courier"; ctx.textAlign = "center";
                       ctx.fillText(chatMsg, snake[0].x+10, snake[0].y-15); chatTimer--;
                   }
                   gameLoop();
@@ -375,16 +340,11 @@
               gameRunning = false;
               document.getElementById("bgMusic").pause(); document.getElementById("rageSound").pause();
               playSfx("deathSound");
-              
               const localH = parseInt(localStorage.getItem("snakeHS") || 0);
-              // Fix: Corrected Roast Library selection logic
               if (totalScore > localH && totalScore > 0) {
                   finalRoastMessage = backhandedPraise[Math.floor(Math.random()*backhandedPraise.length)];
                   localStorage.setItem("snakeHS", totalScore);
-              } else { 
-                  finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)]; 
-              }
-              
+              } else { finalRoastMessage = crashRoasts[Math.floor(Math.random()*crashRoasts.length)]; }
               await saveScore(currentPlayer, totalScore);
               document.getElementById("over-roast").innerText = finalRoastMessage;
               document.getElementById("over-score").innerText = "SCORE: " + totalScore;
@@ -393,21 +353,17 @@
 
           async function saveScore(name, score) {
               if (score <= 0) return;
-              const id = name.toLowerCase().trim();
               try {
-                  const r = await fetch(`${DB_URL}scores/${id}.json`);
-                  const exist = await r.json();
-                  if (!exist || score > exist.score) {
-                      await fetch(`${DB_URL}scores/${id}.json`, {
-                          method: 'PUT',
-                          body: JSON.stringify({ name: name, score: score, level: currentLevel })
-                      });
-                  }
+                  const id = name.toLowerCase().trim();
+                  await fetch(`${DB_URL}scores/${id}.json`, {
+                      method: 'PUT',
+                      body: JSON.stringify({ name: name, score: score, level: currentLevel })
+                  });
               } catch(e) {}
           }
 
           function shareToWhatsApp() {
-              const text = `🐍 THE SNAKE - MVP CHALLENGE\nScore: ${totalScore} | Level: ${currentLevel}\nRoast: "${finalRoastMessage}"\nPlay: ${window.location.href}`;
+              const text = `🐍 THE SNAKE\nScore: ${totalScore} | Level: ${currentLevel}\nRoast: "${finalRoastMessage}"\nPlay: ${window.location.href}`;
               window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
           }
 
@@ -419,20 +375,50 @@
               if (isPaused) { m.pause(); r.pause(); } else { if(isRage) r.play(); else if(musicEnabled) m.play(); gameLoop(); }
           }
 
+          // INPUT HANDLING (Shared for Mobile Buttons, Swipe, and Keyboard)
+          function handleInput(dir) {
+              if (isPaused || !gameRunning) return;
+              if (dir === 'left' && dx === 0) nextDirection = {dx:-20, dy:0};
+              if (dir === 'up' && dy === 0) nextDirection = {dx:0, dy:-20};
+              if (dir === 'right' && dx === 0) nextDirection = {dx:20, dy:0};
+              if (dir === 'down' && dy === 0) nextDirection = {dx:0, dy:20};
+          }
+
+          // Keyboard Listeners
           document.addEventListener("keydown", e => {
               if (document.activeElement.tagName === "INPUT") return;
               if (e.keyCode === 80) togglePause();
-              if (isPaused || !gameRunning) return;
               const k = e.keyCode;
-              if ((k===37||k===65) && dx===0) nextDirection = {dx:-20, dy:0};
-              if ((k===38||k===87) && dy===0) nextDirection = {dx:0, dy:-20};
-              if ((k===39||k===68) && dx===0) nextDirection = {dx:20, dy:0};
-              if ((k===40||k===83) && dy===0) nextDirection = {dx:0, dy:20};
+              if (k===37||k===65) handleInput('left');
+              if (k===38||k===87) handleInput('up');
+              if (k===39||k===68) handleInput('right');
+              if (k===40||k===83) handleInput('down');
               if([32,37,38,39,40].includes(k)) e.preventDefault();
           });
+
+          // Swipe Logic
+          let touchStartX = 0, touchStartY = 0;
+          document.addEventListener('touchstart', e => {
+              touchStartX = e.changedTouches[0].screenX;
+              touchStartY = e.changedTouches[0].screenY;
+          }, false);
+
+          document.addEventListener('touchend', e => {
+              let x = e.changedTouches[0].screenX;
+              let y = e.changedTouches[0].screenY;
+              let diffX = x - touchStartX;
+              let diffY = y - touchStartY;
+
+              if (Math.abs(diffX) > Math.abs(diffY)) {
+                  if (diffX > 30) handleInput('right');
+                  else if (diffX < -30) handleInput('left');
+              } else {
+                  if (diffY > 30) handleInput('down');
+                  else if (diffY < -30) handleInput('up');
+              }
+          }, false);
 
           window.onload = fetchGlobalHigh;
      </script>
 </body>
 </html>
-
